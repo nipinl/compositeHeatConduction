@@ -2,19 +2,19 @@
 #include<vector>
 using namespace std;
 bool debug = true;
-bool axi = true;//axi symmetric case; like tube
+bool axi = false;//axi symmetric case; like tube
 const int M = 10;//Number of divisions in y direction
 const int N = 10;//Number of divisions in x direction
-const double r1 = 0.03;//Inner radius of the tube
-const double t1 = 0.01;//thickness of the tube
-const double Length = 0.1;//Length of the cylinder
+const double r1 = 0.1;//Inner radius of the tube
+const double t1 = 0.04;//thickness of the tube
+const double Length = 0.04;//Length of the cylinder
 
 //Material properties
 const double tCond = 2.0; 
 const double spHeat = 10;
 const double density = 8000.0;
 
-const double simTime = 10.5 ;//in seconds
+const double simTime = 0.1 ;//in seconds
 const double initTemp = 100.0;//Initial uniform temperature of the tube
 
 //const temp bc
@@ -69,6 +69,11 @@ int main(){
 					rho[j][i] = density;
                 }
     }
+		for (int j=0;j<M+2;j++) {
+                for (int i=0;i<N+2;i++) {
+                    cout<<tk[j][i] <<"  -  "<< cp[j][i]<<"  -  " << rho[j][i]<<endl ;
+                }
+    }
 
 	// temperature variables for storing at different points of the algorithm
 	double te0[M+2][N+2]{0},  te[M+2][N+2]{0},  tep[M+2][N+2]{0};
@@ -95,8 +100,8 @@ int main(){
 
 	//for convergence checking
 	double errorTe[M+2][N+2]{0};
-	double maxErr = 1e-8;
-    double error = 1.0e-5;
+	double maxErr = 1e-10;
+    double error = 1.0e-9;
 
 	//defining variables for equation
 	double ke{0},  kw{0},  ks{0},  kn{0};
@@ -224,7 +229,7 @@ int main(){
 			//END marching in y
 //solve ----------------------------------------------------------------------------------
             //start convergence checking ---------------------
-            maxErr=1e-8;
+            maxErr=1e-10;
             for (int j=0;j<M+2;j++) {
                 for (int i=0;i<N+2;i++) {
                     errorTe[j][i] = abs(te[j][i]-tep[j][i])/te[j][i];
