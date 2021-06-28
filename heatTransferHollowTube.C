@@ -169,14 +169,14 @@ int main(){
                 beta[1]=tb[0][1]/ta[0][1];
                 alpha[1]=td[0][1]/ta[0][1];
                 //forward substitution
-                for (ii=2;ii<nqp1;ii++){
+                for (ii=2;ii<N+1;ii++){
                     beta[ii]=tb[0][ii]/(ta[0][ii] - tc[0][ii]*beta[ii-1]);
                     alpha[ii]=(td[0][ii]+tc[0][ii]*alpha[ii-1])/(ta[0][ii] - tc[0][ii]*beta[ii-1]);
                 }
                 //backward substitution
-                dum[nq]=alpha[nq];
-                for (jj=0;jj<nqm1;jj++){
-                    ii=nqm1-jj;
+                dum[N]=alpha[N];
+                for (jj=0;jj<N-1;jj++){
+                    ii=N-1-jj;
                     dum[ii]=beta[ii]*dum[ii+1]+alpha[ii];
                 }
                 //end of tdma
