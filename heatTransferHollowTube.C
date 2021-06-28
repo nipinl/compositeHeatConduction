@@ -101,7 +101,7 @@ int main(){
 				te[j][N+1]=(hfR*TfRight+2*te[j][N]*tk[j][N]/dx[N])/(hfR+2*tk[j][N]/dx[N]);
 			}
 
-			//inside tube , which is along z(or x) direction
+			//inside tube, which is along z(or x) direction
 			for (int i=0;i<N+2;i++){
             	/* Const temperature*/ 
 				te[0][i]=TBottom;
@@ -119,10 +119,17 @@ int main(){
 				te[M+1][i]=te[M][i]+0.5*dy[M]*qTop/tk[M][i];
 				/* Convection */
 				te[M+1][i]=(hfT*TfTop+2*te[M][i]*tk[M][i]/dy[M])/(hfT+2*tk[M][i]/dy[M]);
-
 			}
 
-		}
+			//add source terms if any. Now nothing
+			for (j=0;j<M+2;j++) {
+                for (i=0;i<N+2;i++) {
+                    sp[j][i] = 0;
+                    sc[j][i] = 0;
+                }
+            }
+
+		}//inner while loop 
 		//......................Inner Loop ........................................
 
 
