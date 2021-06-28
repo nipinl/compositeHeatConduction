@@ -14,22 +14,22 @@ const double tCond = 2.0;
 const double spHeat = 10;
 const double density = 8000.0;
 
-const double simTime = 0.1 ;//in seconds
+const double simTime = 20.1 ;//in seconds
 const double initTemp = 100.0;//Initial uniform temperature of the tube
 
 //const temp bc
-const double TLeft{200},TRight{100},TBottom{100},TTop{100};
+const double TLeft{100},TRight{100},TBottom{100},TTop{100};
 
 //const heat flux bc
-const double qLeft{0},qRight{0},qBottom{0},qTop{0};
+const double qLeft{50},qRight{50},qBottom{50},qTop{250};
 
 //convection
 const double TfLeft{300},TfRight{300},TfBottom{300},TfTop{300};
-const double hfL{10},hfR{10},hfB{10},hfT{10};
+const double hfL{50},hfR{10},hfB{10},hfT{10};
 
 int maxiter = 1000;
 double re = 1;//relaxation factor
-double dt = 0.1* 1e15;//dt >1e10 for steady state
+double dt = 0.1;//* 1e15;//dt >1e10 for steady state
 
 
 int main(){
@@ -129,10 +129,10 @@ int main(){
 				te[j][0]=TLeft;
             	
 				/* Const heat flux*/   
-				//te[j][0]=te[j][1]+0.5*dx[1]*qLeft/tk[j][1];//heat flux into the system is +ve
+				te[j][0]=te[j][1]+0.5*dx[1]*qLeft/tk[j][1];//heat flux into the system is +ve
 				
 				/* Convection */ 
-				//te[j][0]=(hfL*TfLeft+2*te[j][1]*tk[j][1]/dx[1])/(hfL+2*tk[j][1]/dx[1]);
+				te[j][0]=(hfL*TfLeft+2*te[j][1]*tk[j][1]/dx[1])/(hfL+2*tk[j][1]/dx[1]);
 			}                           
 
 			//tube outlet, which is along r(or y) direction
@@ -140,9 +140,9 @@ int main(){
             	/* Const temperature*/ 
 				te[j][N+1]=TRight;
             	/* Const heat flux*/
-				//te[j][N+1]=te[j][N]+0.5*dx[N]*qRight/tk[j][N];
+				te[j][N+1]=te[j][N]+0.5*dx[N]*qRight/tk[j][N];
 				/* Convection */
-				//te[j][N+1]=(hfR*TfRight+2*te[j][N]*tk[j][N]/dx[N])/(hfR+2*tk[j][N]/dx[N]);
+				te[j][N+1]=(hfR*TfRight+2*te[j][N]*tk[j][N]/dx[N])/(hfR+2*tk[j][N]/dx[N]);
 			}
 
 			//inside tube, which is along z(or x) direction
@@ -150,9 +150,9 @@ int main(){
             	/* Const temperature*/ 
 				te[0][i]=TBottom;
             	/* Const heat flux*/ 
-				//te[0][i]=te[1][i]+0.5*dy[1]*qBottom/tk[1][i];
+				te[0][i]=te[1][i]+0.5*dy[1]*qBottom/tk[1][i];
 				/* Convection */ 
-				//te[0][i]=(hfB*TfBottom+2*te[1][i]*tk[1][i]/dy[1])/(hfB+2*tk[1][i]/dy[1]);
+				te[0][i]=(hfB*TfBottom+2*te[1][i]*tk[1][i]/dy[1])/(hfB+2*tk[1][i]/dy[1]);
 			}
 
 			//outside tube, which is along z(or x) direction
@@ -160,9 +160,9 @@ int main(){
             	/* Const temperature*/ 
 				te[M+1][i]=TTop;
             	/* Const heat flux*/ 
-				//te[M+1][i]=te[M][i]+0.5*dy[M]*qTop/tk[M][i];
+				te[M+1][i]=te[M][i]+0.5*dy[M]*qTop/tk[M][i];
 				/* Convection */
-				//te[M+1][i]=(hfT*TfTop+2*te[M][i]*tk[M][i]/dy[M])/(hfT+2*tk[M][i]/dy[M]);
+				te[M+1][i]=(hfT*TfTop+2*te[M][i]*tk[M][i]/dy[M])/(hfT+2*tk[M][i]/dy[M]);
 			}
 
 			//add source terms if any. Now nothing
