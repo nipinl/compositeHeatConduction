@@ -128,12 +128,110 @@ int main(){
                     sc[j][i] = 0;
                 }
             }
+// solve -------------------------------------------
+            for (j=1;j<mp1;j++) {      //marching in y
+                for (i=1;i<np1;i++) {  //marching in x
+                    if (geo==1){sae = dy[j];saw = sae;}
+                    if (geo==2){sae = dy[j]*(y[j]+y[j+1])/2.0;saw = sae;}
+                    if (geo==3){sae = dy[j]*x[i+1];saw = dy[j]*x[i];}
+                    ke=tk[j][i]*tk[j][i+1]*(dx[i]+dx[i+1])/(dx[i]*tk[j][i+1] + dx[i+1]*tk[j][i]);
+                    de = 2.0*ke*sae/(dx[i]+dx[i+1]);
+                    ae=de;
+                    kw=tk[j][i]*tk[j][i-1]*(dx[i]+dx[i-1])/(dx[i]*tk[j][i-1] + dx[i-1]*tk[j][i]);
+                    dw = 2.0*kw*saw/(dx[i]+dx[i-1]);
+                    aw=dw;
+                    if (geo==1){san = dx[i];sas = san;}
+                    if (geo==2){san = dx[i]*y[j+1];sas = dx[i]*y[j];}
+                    if (geo==3){san = dx[i];sas = san;}
 
-		}//inner while loop 
+                    kn = tk[j][i] *tk[j+1][i]*(dy[j]+dy[j+1])/(dy[j]*tk[j+1][i]+dy[j+1]*tk[j][i]);
+                    dn = 2.0*kn*san/(dy[j]+dy[j+1]);
+                    an=dn;
+                    ks = tk[j][i] *tk[j-1][i]*(dy[j]+dy[j-1])/(dy[j]*tk[j-1][i]+dy[j-1]*tk[j][i]);
+                    ds = 2.0*ks*sas/(dy[j]+dy[j-1]);
+                    as=ds;
+                    if (geo==1){vol=dx[i]*dy[j];}
+                    if (geo==2){vol=dx[i]*dy[j]*(y[j]+y[j+1])/2.0;}
+                    if (geo==3){vol=dx[i]*dy[j]*(x[i]+x[i+1])/2.0;}
+                    a0 = rho[j][i]*cp[j][i]*vol/dt;// =0 for steady state
+                    ap = ae+aw+an+as+a0 - sp[j][i]*vol;
+                    b = sc[j][i]*vol+a0*te0[j][i];
+                    ta[0][i]=ap/re;
+                    tb[0][i]=ae;
+                    tc[0][i]=aw;
+                    td[0][i]=b+ap/re*(1-re)*te[j][i]+an*te[j+1][i]+as*te[j-1][i];
+                    if(i==1) td[0][i]=td[0][i]+aw*te[j][0];
+                    if(i==n) td[0][i]=td[0][i]+ae*te[j][np1];
+                }//marching in x
+                //start of tdma
+                beta[1]=tb[0][1]/ta[0][1];
+                alpha[1]=td[0][1]/ta[0][1];
+                //forward substitution
+                for (ii=2;ii<nqp1;ii++){
+                    beta[ii]=tb[0][ii]/(ta[0][ii] - tc[0][ii]*beta[ii-1]);
+                    alpha[ii]=(td[0][ii]+tc[0][ii]*alpha[ii-1])/(ta[0][ii] - tc[0][ii]*beta[ii-1]);
+                }
+                //backward substitution
+                dum[nq]=alpha[nq];
+                for (jj=0;jj<nqm1;jj++){
+                    ii=nqm1-jj;
+                    dum[ii]=beta[ii]*dum[ii+1]+alpha[ii];
+                }
+                //end of tdma
+                for (i=1;i<np1;i++){
+                    te[j][i] = dum[i];
+                }
+            }//marching in y
+            //solve ********************************************
+            //start convergence checking ---------------------
+            maxErr=1e-8;
+            for (j=0;j<mp2;j++) {
+                for (i=0;i<np2;i++) {
+                    errorTe[j][i] = Math.abs(te[j][i]-tep[j][i])/te[j][i];
+                    if (errorTe[j][i]>maxErr) maxErr =errorTe[j][i];
+                }
+            }
+            if(maxErr>error){
+                iter++;
+                for (i=0;i<np2;i++) {
+                    for (j=0;j<mp2;j++) {
+                        tep[j][i]=te[j][i];
+                    }
+                }
+                iflag=1;
+            }
+            if(maxErr<=error){
+                iflag=0;
+                //Toast.makeText(getApplicationContext()," Converged. MaxErr = "+ maxErr+" iter = "+iter+" Time = "+t, Toast.LENGTH_LONG).show();
+            }
+            //end convergence checking ***********************
+
+            if (iter>maxiter) {
+                Toast.makeText(getApplicationContext()," Iterations need to be inreased. Error in Temp is "+ maxErr*100+" %", Toast.LENGTH_LONG).show();
+                tvMaxI.setVisibility(View.VISIBLE);
+                etMaxI.setVisibility(View.VISIBLE);
+                etMaxI.requestFocus();
+                etMaxI.setText(Integer.toString(maxiter));
+                break;
+            }
+
+        }//end of inner while loop checking iflag
 		//......................Inner Loop ........................................
 
 
-	}
+        t=t+dt;//increment time step
+        for (i=0;i<np2;i++) {
+            for (j=0;j<mp2;j++) {
+                te0[j][i]=te[j][i];
+                tep[j][i]=te0[j][i];
+            }
+        }
+        if (iwrite>mwrite) {
+            //Toast.makeText(getApplicationContext(),"Iteration no:" +iter+" and time : "+t,Toast.LENGTH_SHORT).show();
+            iwrite=0;
+        }
+        iwrite++;
+	}//end of while loop checking t<simTime
 	//--------------------Outer Loop ---------------------------------------------
 
 	
