@@ -16,6 +16,8 @@ const double density = 1000.0;
 const double simTime = 100.0;//in seconds
 const double initTemp = 300.0;//Initial uniform temperature of the tube
 
+const double TLeft{300},TRight{300},TBottom{300},TTop{300};
+
 
 
 
@@ -68,6 +70,27 @@ int main(){
 
 		//......................Inner Loop ........................................
 		while(iflag==1){
+			//update properties if are dependent on temperature. Currently it is not
+
+			//Enforce boundary conditions
+			
+			//tube top, which is along r(or y) direction
+            /* Const temperature*/ for (int j=0;j<M+2;j++){te[j][0]=TLeft;}
+            /* Const heat flux*/   for (int j=0;j<M+2;j++){te[j][0]=te[j][1]+0.5*dx[1]*qLeft/tk[j][1];}
+			                            
+
+
+			//tube bottom, which is along r(or y) direction
+            /* Const temperature*/ for (int j=0;j<M+2;j++){te[j][N+1]=TRight;}
+            /* Const heat flux*/   for (int j=0;j<M+2;j++){te[j][N+1]=te[j][N]+0.5*dx[N]*qRight/tk[j][N];}
+
+
+			//inside tube , which is along z(or x) direction
+            /* Const temperature*/ for (int i=0;i<N+2;i++){te[0][i]=TBottom;}
+
+			//outside tube, which is along z(or x) direction
+            /* Const temperature*/ for (int i=0;i<N+2;i++){te[M+1][i]=TTop;}
+
 	
 	
 
