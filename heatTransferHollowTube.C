@@ -129,8 +129,10 @@ int main(){
                 }
             }
 // solve -------------------------------------------
-            for (j=1;j<mp1;j++) {      //marching in y
-                for (i=1;i<np1;i++) {  //marching in x
+			//marching in y
+            for (j=1;j<M+1;j++) {      
+				//marching in x
+                for (i=1;i<N+1;i++) {  
                     if (geo==1){sae = dy[j];saw = sae;}
                     if (geo==2){sae = dy[j]*(y[j]+y[j+1])/2.0;saw = sae;}
                     if (geo==3){sae = dy[j]*x[i+1];saw = dy[j]*x[i];}
@@ -161,7 +163,7 @@ int main(){
                     tc[0][i]=aw;
                     td[0][i]=b+ap/re*(1-re)*te[j][i]+an*te[j+1][i]+as*te[j-1][i];
                     if(i==1) td[0][i]=td[0][i]+aw*te[j][0];
-                    if(i==n) td[0][i]=td[0][i]+ae*te[j][np1];
+                    if(i==n) td[0][i]=td[0][i]+ae*te[j][N+1];
                 }//marching in x
                 //start of tdma
                 beta[1]=tb[0][1]/ta[0][1];
@@ -178,23 +180,23 @@ int main(){
                     dum[ii]=beta[ii]*dum[ii+1]+alpha[ii];
                 }
                 //end of tdma
-                for (i=1;i<np1;i++){
+                for (i=1;i<N+1;i++){
                     te[j][i] = dum[i];
                 }
             }//marching in y
             //solve ********************************************
             //start convergence checking ---------------------
             maxErr=1e-8;
-            for (j=0;j<mp2;j++) {
-                for (i=0;i<np2;i++) {
+            for (j=0;j<M+2;j++) {
+                for (i=0;i<N+2;i++) {
                     errorTe[j][i] = Math.abs(te[j][i]-tep[j][i])/te[j][i];
                     if (errorTe[j][i]>maxErr) maxErr =errorTe[j][i];
                 }
             }
             if(maxErr>error){
                 iter++;
-                for (i=0;i<np2;i++) {
-                    for (j=0;j<mp2;j++) {
+                for (i=0;i<N+2;i++) {
+                    for (j=0;j<M+2;j++) {
                         tep[j][i]=te[j][i];
                     }
                 }
@@ -202,16 +204,12 @@ int main(){
             }
             if(maxErr<=error){
                 iflag=0;
-                //Toast.makeText(getApplicationContext()," Converged. MaxErr = "+ maxErr+" iter = "+iter+" Time = "+t, Toast.LENGTH_LONG).show();
+                cout<<" Converged. MaxErr = "<< maxErr<<" iter = "<<iter<<" Time = "<<t<<endl;
             }
             //end convergence checking ***********************
 
             if (iter>maxiter) {
-                Toast.makeText(getApplicationContext()," Iterations need to be inreased. Error in Temp is "+ maxErr*100+" %", Toast.LENGTH_LONG).show();
-                tvMaxI.setVisibility(View.VISIBLE);
-                etMaxI.setVisibility(View.VISIBLE);
-                etMaxI.requestFocus();
-                etMaxI.setText(Integer.toString(maxiter));
+                cout<<" Iterations need to be inreased. Error in Temp is "<<maxErr*100<<" %"<<endl;
                 break;
             }
 
@@ -220,8 +218,8 @@ int main(){
 
 
         t=t+dt;//increment time step
-        for (i=0;i<np2;i++) {
-            for (j=0;j<mp2;j++) {
+        for (i=0;i<N+2;i++) {
+            for (j=0;j<M+2;j++) {
                 te0[j][i]=te[j][i];
                 tep[j][i]=te0[j][i];
             }
