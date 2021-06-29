@@ -329,7 +329,7 @@ int Shell::checkConvergence(double error){
     for (int j=0;j<M+2;j++) {
         for (int i=0;i<N+2;i++) {
             errorTe = abs(te[j][i]-tep[j][i])/te[j][i];
-            if (errorTe>maxErr) maxErr =errorTe;
+            if (errorTe>maxErr) maxErr = errorTe;
         }
     }
     if(maxErr>error){
