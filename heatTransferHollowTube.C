@@ -2,12 +2,12 @@
 #include<algorithm>
 #include<vector>
 using namespace std;
-bool debug = true;
+bool debug = false;
 bool axi = false;//axi symmetric case; like tube
 const int M = 10;//Number of divisions in y direction
 const int N = 10;//Number of divisions in x direction
-const double r1 = 0.1;//Inner radius of the tube
-const double t1 = 0.04;//thickness of the tube
+const double ri = 0.1;//Inner radius of the tube
+const double Width = 0.04;//thickness of the tube
 const double Length = 0.04;//Length of the cylinder
 
 //Material properties
@@ -16,13 +16,21 @@ const double spHeat = 10;
 
 const double density = 8000.0;
 const double simTime = 20.1 ;//in seconds
+
+//initial condition
 const double initTemp = 100.0;//Initial uniform temperature of the tube
 
+//boundary condition
+enum bc {constTemp, constHeatFlux, convection};
+bc lbc = constTemp;
+bc rbc = constTemp;
+bc tbc = constTemp;
+bc bbc = constTemp;
 //const temp bc
-const double TLeft{100},TRight{100},TBottom{100},TTop{100};
+const double TLeft{100},TRight{100},TBottom{100},TTop{200};
 
 //const heat flux bc
-const double qLeft{50},qRight{50},qBottom{50},qTop{250};
+const double qLeft{50},qRight{50},qBottom{5000},qTop{250};
 
 //convection
 const double TfLeft{300},TfRight{300},TfBottom{300},TfTop{300};
@@ -42,7 +50,7 @@ int main(){
 
 	//populate dx and dy
 	for (int i=0;i<N+2;i++){dx[i] = Length/double(N);}
-	for (int j=0;j<M+2;j++){dy[j] = t1/double(M);}
+	for (int j=0;j<M+2;j++){dy[j] = Width/double(M);}
 	
 	//print the values for checking(only in debug mode)
 	if (debug){
@@ -56,6 +64,7 @@ int main(){
 	if (debug) cout<<"dx = "<<dx[0]<<" and dy = "<<dy[0]<<endl;//Just a check point
 	
 	//populate x and y
+	if (axi) y[0] = ri;
 	for (int i=0;i<N+2;i++){x[i+1] = x[i]+dx[i];}
 	for (int i=0;i<M+2;i++){y[i+1] = y[i]+dy[i];}
 	if (debug) for(int i = 0;i<N+3;i++) cout << x[i]<<endl; 
@@ -70,10 +79,12 @@ int main(){
 					rho[j][i] = density;
                 }
     } 
+	if (debug){
 		for (int j=0;j<M+2;j++) {
                 for (int i=0;i<N+2;i++) {
                     cout<<tk[j][i] <<"  -  "<< cp[j][i]<<"  -  " << rho[j][i]<<endl ;
                 }
+		}
     }
 
 	// temperature variables for storing at different points of the algorithm
@@ -88,6 +99,9 @@ int main(){
 	
 	//source term modelling
 	double sc[M+2][N+2]{0},sp[M+2][N+2]{0};
+
+	
+
 
 	//for TDMA
 	double ta[M+1][N+1]{0},  tb[M+1][N+1]{0},  tc[M+1][N+1]{0},  td[M+1][N+1]{0};
@@ -126,45 +140,82 @@ int main(){
 			
 			//tube inlet, which is along r(or y) direction            
 			for (int j=0;j<M+2;j++){
-				/* Const temperature*/ 
-				te[j][0]=TLeft;
-            	
-				/* Const heat flux*/   
-				te[j][0]=te[j][1]+0.5*dx[1]*qLeft/tk[j][1];//heat flux into the system is +ve
-				
-				/* Convection */ 
-				te[j][0]=(hfL*TfLeft+2*te[j][1]*tk[j][1]/dx[1])/(hfL+2*tk[j][1]/dx[1]);
+				switch (lbc)
+				{
+				case constTemp:
+					te[j][0]=TLeft;
+					break;
+				case constHeatFlux:
+					te[j][0]=te[j][1]+0.5*dx[1]*qLeft/tk[j][1];//heat flux into the system is +ve
+					break;
+				case convection:
+					te[j][0]=(hfL*TfLeft+2*te[j][1]*tk[j][1]/dx[1])/(hfL+2*tk[j][1]/dx[1]);
+					break;
+				default:
+					te[j][0]=TLeft;
+					break;
+				}
 			}                           
 
 			//tube outlet, which is along r(or y) direction
 			for (int j=0;j<M+2;j++){
-            	/* Const temperature*/ 
-				te[j][N+1]=TRight;
-            	/* Const heat flux*/
-				te[j][N+1]=te[j][N]+0.5*dx[N]*qRight/tk[j][N];
-				/* Convection */
-				te[j][N+1]=(hfR*TfRight+2*te[j][N]*tk[j][N]/dx[N])/(hfR+2*tk[j][N]/dx[N]);
-			}
+				switch (rbc)
+				{
+				case constTemp:
+					te[j][N+1]=TRight;
+					break;
+				case constHeatFlux:
+					te[j][N+1]=te[j][N]+0.5*dx[N]*qRight/tk[j][N];//heat flux into the system is +ve
+					break;
+				case convection:
+					te[j][N+1]=(hfR*TfRight+2*te[j][N]*tk[j][N]/dx[N])/(hfR+2*tk[j][N]/dx[N]);
+					break;
+				default:
+					te[j][0]=TRight;
+					break;
+				}
+			} 
+
 
 			//inside tube, which is along z(or x) direction
 			for (int i=0;i<N+2;i++){
-            	/* Const temperature*/ 
-				te[0][i]=TBottom;
-            	/* Const heat flux*/ 
-				te[0][i]=te[1][i]+0.5*dy[1]*qBottom/tk[1][i];
-				/* Convection */ 
-				te[0][i]=(hfB*TfBottom+2*te[1][i]*tk[1][i]/dy[1])/(hfB+2*tk[1][i]/dy[1]);
-			}
+				switch (bbc)
+				{
+				case constTemp:
+					te[0][i]=TBottom;
+					break;
+				case constHeatFlux:
+					te[0][i]=te[1][i]+0.5*dy[1]*qBottom/tk[1][i];//heat flux into the system is +ve
+					break;
+				case convection:
+					te[0][i]=(hfB*TfBottom+2*te[1][i]*tk[1][i]/dy[1])/(hfB+2*tk[1][i]/dy[1]);
+					break;
+				default:
+					te[0][i]=TBottom;
+					break;
+				}
+			} 
+			
 
 			//outside tube, which is along z(or x) direction
 			for (int i=0;i<N+2;i++){
-            	/* Const temperature*/ 
-				te[M+1][i]=TTop;
-            	/* Const heat flux*/ 
-				te[M+1][i]=te[M][i]+0.5*dy[M]*qTop/tk[M][i];
-				/* Convection */
-				te[M+1][i]=(hfT*TfTop+2*te[M][i]*tk[M][i]/dy[M])/(hfT+2*tk[M][i]/dy[M]);
-			}
+				switch (tbc)
+				{
+				case constTemp:
+					te[M+1][i]=TTop;
+					break;
+				case constHeatFlux:
+					te[M+1][i]=te[M][i]+0.5*dy[M]*qTop/tk[M][i];//heat flux into the system is +ve
+					break;
+				case convection:
+					te[M+1][i]=(hfT*TfTop+2*te[M][i]*tk[M][i]/dy[M])/(hfT+2*tk[M][i]/dy[M]);
+					break;
+				default:
+					te[M+1][i]=TTop;
+					break;
+				}
+			} 
+
 
 			//add source terms if any. Now nothing
 			for (int j=0;j<M+2;j++) {

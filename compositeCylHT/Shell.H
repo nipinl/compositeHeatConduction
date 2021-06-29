@@ -17,6 +17,8 @@ double tCond;
 double spHeat;
 double density;
 double simTime;//in seconds
+
+//Initial condition
 double initTemp;//Initial uniform temperature of the tube
 
 // temp bc
