@@ -17,7 +17,7 @@ class Shell{
         double tCond; 
         double spHeat;
         double density;
-        double simTime;//in seconds
+        
 
         //Initial condition
         double initTemp;//Initial uniform temperature of the tube
@@ -38,7 +38,9 @@ class Shell{
 
         int maxiter;
         double re;//relaxation factor
-        double dt;//* 1e15;//dt >1e10 for steady state
+        double simTime;
+        double dt;
+        
 
         vector<double> x,y,dx,dy;
         vector<vector<double>> tk,cp,rho;
@@ -52,12 +54,7 @@ class Shell{
 
     public:
         Shell();
-        //Shell(double real, double img);
-        //Shell(const Shell &C);
-        const Shell & operator=(const Shell &other);
-
-        double getReal()const {return M;}
-        double getImg()const {return N;}
+        void setTimes(double,double);
         void populateNodes();
         void populateMaterialProperties();
         void initialiseField();
@@ -68,7 +65,4 @@ class Shell{
         void print2dVector(vector<vector<double>> const &v);
         void printDetail();
 };
-ostream &operator<<(ostream& out,const Shell& C);
-
-
 #endif

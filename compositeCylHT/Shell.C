@@ -9,7 +9,6 @@ Shell::Shell():
 				Length(0.04),
 				Width(0.04),
 				tCond(2),spHeat(10),density(8000),
-				simTime(20),
 				initTemp(300),
 				lbc(constTemp),rbc(constTemp),bbc(constTemp),tbc(constTemp),
 				TLeft(300),TRight(300),TBottom(300),TTop(500),
@@ -18,22 +17,14 @@ Shell::Shell():
 				hfL(10),hfR(10),hfB(10),hfT(50),
 				maxiter(1000),
 				re(1),
+				simTime(20),
 				dt(0.1)
-
 				{}
 
-//Shell::Shell(double real,double img):x(real),y(img){}
-/*  Shell::Shell(const Shell &C){
-    cout<<"invoking copy constructor !!"<<endl;
-   // x=C.x;y=C.y;
-}  */
-//const Shell & Shell::operator=(const Shell &other){	this->x = other.x;this->y = other.y;return *this;}
-
-ostream &operator<<(ostream& out,const Shell& C) {
-	out<<C.getReal()<<"i +"<<C.getImg()<< " j ";
-	return out;
+void Shell::setTimes(double simtime, double delt){
+	simTime = simtime;
+	dt = delt;
 }
-
 void Shell::populateNodes(){
 	//populate dx, dy
 	for (int i=0;i<N+2;i++){dx.push_back(Length/double(N));}
@@ -122,14 +113,11 @@ void::Shell::solveIt(){
 	double sae{0},  saw{0}, san{0}, sas{0};
 	//variables required for loop
 	int iter{0}, iflag = 1;
-	double t=0;//time
-	int mwrite=0,iwrite =1;
-
+	
 
 	//--------------------Outer Loop ---------------------------------------------
-	while(t<simTime){
-		iter = 0;
-		iflag =1;
+	
+		
 		//......................Inner Loop ........................................
 		while(iflag==1){
 			//update properties if are dependent on temperature. Currently it is not
@@ -191,7 +179,7 @@ void::Shell::solveIt(){
             //start convergence checking ---------------------
             iflag = checkConvergence(error);
 			if(iflag==1) iter++;
-			if (iflag==0) cout<<"  Solution Converged for Time = "<<t<<" in "<<iter<<" iterations"<<endl;
+			if (iflag==0) cout<<"  Solution Converged for one time step. dt = "<<dt<<" in "<<iter<<" iterations"<<endl;
             //end convergence checking ***********************
 
             if (iter>maxiter) {
@@ -203,25 +191,23 @@ void::Shell::solveIt(){
 		//......................Inner Loop ........................................
 
 
-        t=t+dt;//increment time step
+        
         for (int i=0;i<N+2;i++) {
             for (int j=0;j<M+2;j++) {
                 te0[j][i]=te[j][i];
                 tep[j][i]=te0[j][i];
             }
         }
-        if (iwrite>mwrite) {
-			        for (int i=0;i<N+2;i++) {
-         			   for (int j=0;j<M+2;j++) {
-                			cout<<te[j][i]<<"  ";
-           				}
-						cout<<endl;
-       				 }
+        
+		for (int i=0;i<N+2;i++) {
+         	for (int j=0;j<M+2;j++) {
+                cout<<te[j][i]<<"  ";
+           	}
+			cout<<endl;
+       	}
             
-            iwrite=0;
-        }
-        iwrite++;
-	}//end of while loop checking t<simTime
+        
+	//end of while loop checking t<simTime
 	//--------------------Outer Loop ---------------------------------------------
 
 }
