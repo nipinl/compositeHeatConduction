@@ -1,4 +1,5 @@
 #include<iostream>
+#include<algorithm>
 #include<vector>
 using namespace std;
 bool debug = true;
@@ -40,9 +41,10 @@ int main(){
 	double dx[N+2]{0}, dy[M+2]{0};
 
 	//populate dx and dy
-	std::fill_n(dx,N+2,Length/double(N));
-	std::fill_n(dy,M+2,t1/double(M));
-
+	fill_n(dx,N+2,Length/double(N));
+	fill_n(dy,M+2,t1/double(M));
+	
+	//print the values for checking(only in debug mode)
 	if (debug){
 		for(int i = 0;i<N+2;i++) cout << "dx["<<i<<"] = "<<dx[i]<<endl; 
 		cout<<endl;
@@ -58,17 +60,20 @@ int main(){
 	for (int i=0;i<M+2;i++){y[i+1] = y[i]+dy[i];}
 	if (debug) for(int i = 0;i<N+3;i++) cout << x[i]<<endl; 
 	if (debug) for(int j = 0;j<M+3;j++) cout << y[j]<<endl;
-	//if (debug) cout<<"x[0] = "<<x[0]<<", x[1] = "<<x[1]<<" and y[0] = "<<y[0]<<", y[1] = "<<y[1]<<endl;//Just another check point
 
 	// keep the option of variable thermal conductivity, Cp and density
 	double tk[M+2][N+2]{0},  cp[M+2][N+2]{0},  rho[M+2][N+2]{0};
-	for (int j=0;j<M+2;j++) {
+	//int length2d = (M+2)*(N+2);
+	fill(&tk[0][0],&tk[0][0]+sizeof(tk),tCond);
+	fill(&cp[0][0],&cp[0][0]+sizeof(cp),spHeat);
+	fill(&rho[0][0],&rho[0][0]+sizeof(rho),density);
+	/* for (int j=0;j<M+2;j++) {
                 for (int i=0;i<N+2;i++) {
                     tk[j][i] = tCond;
 					cp[j][i] = spHeat;
 					rho[j][i] = density;
                 }
-    }
+    } */
 		for (int j=0;j<M+2;j++) {
                 for (int i=0;i<N+2;i++) {
                     cout<<tk[j][i] <<"  -  "<< cp[j][i]<<"  -  " << rho[j][i]<<endl ;
