@@ -114,7 +114,6 @@ void::Shell::solveIt(){
 
 
 	//for convergence checking
-	double errorTe[M+2][N+2]{0};
 	double maxErr = 1e-10;
     double error = 1.0e-9;
 
@@ -140,7 +139,112 @@ void::Shell::solveIt(){
 
 			//Enforce boundary conditions
 			
-			//tube inlet, which is along r(or y) direction            
+			 
+
+
+			//add source terms if any. Now nothing
+			for (int j=0;j<M+2;j++) {
+                for (int i=0;i<N+2;i++) {
+                    sp[j][i] = 0;
+                    sc[j][i] = 0;
+                }
+            }
+			applyBoundaryConditions();
+// solve -------------------------------------------
+			//START marching in y
+            for (int j=1;j<M+1;j++) {      
+				//START marching in x
+                for (int i=1;i<N+1;i++) {  
+                    if (!axi){sae = dy[j];saw = sae;}
+                    if (axi){sae = dy[j]*(y[j]+y[j+1])/2.0;saw = sae;}
+                    ke=tk[j][i]*tk[j][i+1]*(dx[i]+dx[i+1])/(dx[i]*tk[j][i+1] + dx[i+1]*tk[j][i]);
+                    de = 2.0*ke*sae/(dx[i]+dx[i+1]);
+                    ae=de;
+                    kw=tk[j][i]*tk[j][i-1]*(dx[i]+dx[i-1])/(dx[i]*tk[j][i-1] + dx[i-1]*tk[j][i]);
+                    dw = 2.0*kw*saw/(dx[i]+dx[i-1]);
+                    aw=dw;
+                    if (!axi){san = dx[i];sas = san;}
+                    if (axi){san = dx[i]*y[j+1];sas = dx[i]*y[j];}
+
+                    kn = tk[j][i] *tk[j+1][i]*(dy[j]+dy[j+1])/(dy[j]*tk[j+1][i]+dy[j+1]*tk[j][i]);
+                    dn = 2.0*kn*san/(dy[j]+dy[j+1]);
+                    an=dn;
+                    ks = tk[j][i] *tk[j-1][i]*(dy[j]+dy[j-1])/(dy[j]*tk[j-1][i]+dy[j-1]*tk[j][i]);
+                    ds = 2.0*ks*sas/(dy[j]+dy[j-1]);
+                    as=ds;
+                    if (!axi){vol=dx[i]*dy[j];}
+                    if (axi){vol=dx[i]*dy[j]*(y[j]+y[j+1])/2.0;}
+                    a0 = rho[j][i]*cp[j][i]*vol/dt;// =0 for steady state
+                    ap = ae+aw+an+as+a0 - sp[j][i]*vol;
+                    b = sc[j][i]*vol+a0*te0[j][i];
+                    ta[0][i]=ap/re;
+                    tb[0][i]=ae;
+                    tc[0][i]=aw;
+                    td[0][i]=b+ap/re*(1-re)*te[j][i]+an*te[j+1][i]+as*te[j-1][i];
+                    if(i==1) td[0][i]=td[0][i]+aw*te[j][0];
+                    if(i==N) td[0][i]=td[0][i]+ae*te[j][N+1];
+                }//marching in x ends here
+				//END marching in x
+                //start of tdma
+                beta[1]=tb[0][1]/ta[0][1];
+                alpha[1]=td[0][1]/ta[0][1];
+                //forward substitution
+                for (int ii=2;ii<N+1;ii++){
+                    beta[ii]=tb[0][ii]/(ta[0][ii] - tc[0][ii]*beta[ii-1]);
+                    alpha[ii]=(td[0][ii]+tc[0][ii]*alpha[ii-1])/(ta[0][ii] - tc[0][ii]*beta[ii-1]);
+                }
+                //backward substitution
+                dum[N]=alpha[N];
+                for (int jj=0;jj<N-1;jj++){
+                    int ii=N-1-jj;
+                    dum[ii]=beta[ii]*dum[ii+1]+alpha[ii];
+                }
+                //end of tdma
+                for (int i=1;i<N+1;i++){  //i can be used as x marching is over
+                    te[j][i] = dum[i];
+                }
+            }//marching in y ends here
+			//END marching in y
+//solve ----------------------------------------------------------------------------------
+            //start convergence checking ---------------------
+            iflag = checkConvergence(error);
+			if(iflag==1) iter++;
+			if (iflag==0) cout<<"  Solution Converged for Time = "<<t<<" in "<<iter<<" iterations"<<endl;
+            //end convergence checking ***********************
+
+            if (iter>maxiter) {
+                cout<<" Iterations need to be inreased. Error in Temp is "<<maxErr*100<<" %"<<endl;
+                break;
+            }
+
+        }//end of inner while loop checking iflag
+		//......................Inner Loop ........................................
+
+
+        t=t+dt;//increment time step
+        for (int i=0;i<N+2;i++) {
+            for (int j=0;j<M+2;j++) {
+                te0[j][i]=te[j][i];
+                tep[j][i]=te0[j][i];
+            }
+        }
+        if (iwrite>mwrite) {
+			        for (int i=0;i<N+2;i++) {
+         			   for (int j=0;j<M+2;j++) {
+                			cout<<te[j][i]<<"  ";
+           				}
+						cout<<endl;
+       				 }
+            
+            iwrite=0;
+        }
+        iwrite++;
+	}//end of while loop checking t<simTime
+	//--------------------Outer Loop ---------------------------------------------
+
+}
+void Shell::applyBoundaryConditions(){
+	//tube inlet, which is along r(or y) direction            
 			for (int j=0;j<M+2;j++){
 				switch (lbc)
 				{
@@ -216,125 +320,32 @@ void::Shell::solveIt(){
 					te[M+1][i]=TTop;
 					break;
 				}
-			} 
+			}
+}
+int Shell::checkConvergence(double error){
+	double maxErr{1e-10},errorTe{0};
+	int iflag =1;
 
-
-			//add source terms if any. Now nothing
-			for (int j=0;j<M+2;j++) {
-                for (int i=0;i<N+2;i++) {
-                    sp[j][i] = 0;
-                    sc[j][i] = 0;
-                }
-            }
-// solve -------------------------------------------
-			//START marching in y
-            for (int j=1;j<M+1;j++) {      
-				//START marching in x
-                for (int i=1;i<N+1;i++) {  
-                    if (!axi){sae = dy[j];saw = sae;}
-                    if (axi){sae = dy[j]*(y[j]+y[j+1])/2.0;saw = sae;}
-                    ke=tk[j][i]*tk[j][i+1]*(dx[i]+dx[i+1])/(dx[i]*tk[j][i+1] + dx[i+1]*tk[j][i]);
-                    de = 2.0*ke*sae/(dx[i]+dx[i+1]);
-                    ae=de;
-                    kw=tk[j][i]*tk[j][i-1]*(dx[i]+dx[i-1])/(dx[i]*tk[j][i-1] + dx[i-1]*tk[j][i]);
-                    dw = 2.0*kw*saw/(dx[i]+dx[i-1]);
-                    aw=dw;
-                    if (!axi){san = dx[i];sas = san;}
-                    if (axi){san = dx[i]*y[j+1];sas = dx[i]*y[j];}
-
-                    kn = tk[j][i] *tk[j+1][i]*(dy[j]+dy[j+1])/(dy[j]*tk[j+1][i]+dy[j+1]*tk[j][i]);
-                    dn = 2.0*kn*san/(dy[j]+dy[j+1]);
-                    an=dn;
-                    ks = tk[j][i] *tk[j-1][i]*(dy[j]+dy[j-1])/(dy[j]*tk[j-1][i]+dy[j-1]*tk[j][i]);
-                    ds = 2.0*ks*sas/(dy[j]+dy[j-1]);
-                    as=ds;
-                    if (!axi){vol=dx[i]*dy[j];}
-                    if (axi){vol=dx[i]*dy[j]*(y[j]+y[j+1])/2.0;}
-                    a0 = rho[j][i]*cp[j][i]*vol/dt;// =0 for steady state
-                    ap = ae+aw+an+as+a0 - sp[j][i]*vol;
-                    b = sc[j][i]*vol+a0*te0[j][i];
-                    ta[0][i]=ap/re;
-                    tb[0][i]=ae;
-                    tc[0][i]=aw;
-                    td[0][i]=b+ap/re*(1-re)*te[j][i]+an*te[j+1][i]+as*te[j-1][i];
-                    if(i==1) td[0][i]=td[0][i]+aw*te[j][0];
-                    if(i==N) td[0][i]=td[0][i]+ae*te[j][N+1];
-                }//marching in x ends here
-				//END marching in x
-                //start of tdma
-                beta[1]=tb[0][1]/ta[0][1];
-                alpha[1]=td[0][1]/ta[0][1];
-                //forward substitution
-                for (int ii=2;ii<N+1;ii++){
-                    beta[ii]=tb[0][ii]/(ta[0][ii] - tc[0][ii]*beta[ii-1]);
-                    alpha[ii]=(td[0][ii]+tc[0][ii]*alpha[ii-1])/(ta[0][ii] - tc[0][ii]*beta[ii-1]);
-                }
-                //backward substitution
-                dum[N]=alpha[N];
-                for (int jj=0;jj<N-1;jj++){
-                    int ii=N-1-jj;
-                    dum[ii]=beta[ii]*dum[ii+1]+alpha[ii];
-                }
-                //end of tdma
-                for (int i=1;i<N+1;i++){  //i can be used as x marching is over
-                    te[j][i] = dum[i];
-                }
-            }//marching in y ends here
-			//END marching in y
-//solve ----------------------------------------------------------------------------------
-            //start convergence checking ---------------------
-            maxErr=1e-10;
-            for (int j=0;j<M+2;j++) {
-                for (int i=0;i<N+2;i++) {
-                    errorTe[j][i] = abs(te[j][i]-tep[j][i])/te[j][i];
-                    if (errorTe[j][i]>maxErr) maxErr =errorTe[j][i];
-                }
-            }
-            if(maxErr>error){
-                iter++;
-                for (int i=0;i<N+2;i++) {
-                    for (int j=0;j<M+2;j++) {
-                        tep[j][i]=te[j][i];
-                    }
-                }
-                iflag=1;
-            }
-            if(maxErr<=error){
-                iflag=0;
-                cout<<" Converged. MaxErr = "<< maxErr<<" iter = "<<iter<<" Time = "<<t<<endl;
-            }
-            //end convergence checking ***********************
-
-            if (iter>maxiter) {
-                cout<<" Iterations need to be inreased. Error in Temp is "<<maxErr*100<<" %"<<endl;
-                break;
-            }
-
-        }//end of inner while loop checking iflag
-		//......................Inner Loop ........................................
-
-
-        t=t+dt;//increment time step
+    for (int j=0;j<M+2;j++) {
+        for (int i=0;i<N+2;i++) {
+            errorTe = abs(te[j][i]-tep[j][i])/te[j][i];
+            if (errorTe>maxErr) maxErr =errorTe;
+        }
+    }
+    if(maxErr>error){
         for (int i=0;i<N+2;i++) {
             for (int j=0;j<M+2;j++) {
-                te0[j][i]=te[j][i];
-                tep[j][i]=te0[j][i];
+                tep[j][i]=te[j][i];
             }
         }
-        if (iwrite>mwrite) {
-			        for (int i=0;i<N+2;i++) {
-         			   for (int j=0;j<M+2;j++) {
-                			cout<<te[j][i]<<"  ";
-           				}
-						cout<<endl;
-       				 }
-            
-            iwrite=0;
-        }
-        iwrite++;
-	}//end of while loop checking t<simTime
-	//--------------------Outer Loop ---------------------------------------------
-
+        iflag=1;
+    }
+    if(maxErr<=error){
+        iflag=0;
+		cout<<"MaxErr = "<< maxErr;
+        
+    }
+	return iflag;
 }
 void Shell::print2dVector(vector<vector<double>> const &v){
 	 for (auto i : v) {
