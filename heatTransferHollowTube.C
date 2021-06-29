@@ -13,8 +13,8 @@ const double Length = 0.04;//Length of the cylinder
 //Material properties
 const double tCond = 2.0; 
 const double spHeat = 10;
-const double density = 8000.0;
 
+const double density = 8000.0;
 const double simTime = 20.1 ;//in seconds
 const double initTemp = 100.0;//Initial uniform temperature of the tube
 
@@ -41,8 +41,8 @@ int main(){
 	double dx[N+2]{0}, dy[M+2]{0};
 
 	//populate dx and dy
-	fill_n(dx,N+2,Length/double(N));
-	fill_n(dy,M+2,t1/double(M));
+	for (int i=0;i<N+2;i++){dx[i] = Length/double(N);}
+	for (int j=0;j<M+2;j++){dy[j] = t1/double(M);}
 	
 	//print the values for checking(only in debug mode)
 	if (debug){
@@ -63,17 +63,13 @@ int main(){
 
 	// keep the option of variable thermal conductivity, Cp and density
 	double tk[M+2][N+2]{0},  cp[M+2][N+2]{0},  rho[M+2][N+2]{0};
-	//int length2d = (M+2)*(N+2);
-	fill(&tk[0][0],&tk[0][0]+sizeof(tk),tCond);
-	fill(&cp[0][0],&cp[0][0]+sizeof(cp),spHeat);
-	fill(&rho[0][0],&rho[0][0]+sizeof(rho),density);
-	/* for (int j=0;j<M+2;j++) {
+	for (int j=0;j<M+2;j++) {
                 for (int i=0;i<N+2;i++) {
                     tk[j][i] = tCond;
 					cp[j][i] = spHeat;
 					rho[j][i] = density;
                 }
-    } */
+    } 
 		for (int j=0;j<M+2;j++) {
                 for (int i=0;i<N+2;i++) {
                     cout<<tk[j][i] <<"  -  "<< cp[j][i]<<"  -  " << rho[j][i]<<endl ;
