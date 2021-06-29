@@ -90,7 +90,19 @@ void Shell::populateMaterialProperties(){
 void Shell::initialiseField(){
 	vector<double> te1d(N+2, initTemp);
 	vector<double> scsp1d(N+2, 0);
-	
+	for (int i = 0; i < N+1; i++)
+	{
+		ta.push_back(0);
+		tb.push_back(0);
+		tc.push_back(0);
+		td.push_back(0);
+	}
+	/* 
+	vector<double> ta(N+1, 0);
+	vector<double> tb(N+1, 0);
+	vector<double> tc(N+1, 0);
+	vector<double> td(N+1, 0);
+ */	
 	for (int i = 0 ; i < M+2 ; i++) {
         te.push_back(te1d);
 		te0.push_back(te1d);
@@ -104,13 +116,8 @@ void Shell::initialiseField(){
 }
 void::Shell::solveIt(){
 	//for TDMA
-	double ta[N+1]{0},  tb[N+1]{0},  tc[N+1]{0},  td[N+1]{0};
-	double alpha[N+2]{0}, beta[N+2]{0},  dum[N+2]{0};
-	for(int i = 0;i<N+2;i++){
-		alpha[i] = 1;
-		beta[i] = 1;
-		dum[i] = 1;
-	} 
+	//double ta[N+1]{0},  tb[N+1]{0},  tc[N+1]{0},  td[N+1]{0};
+	 cout<<ta[0]<<" and "<<ta[1]<<endl;
 
 
 	//for convergence checking
@@ -186,23 +193,8 @@ void::Shell::solveIt(){
                 }//marching in x ends here
 				//END marching in x
                 //start of tdma
-                beta[1]=tb[1]/ta[1];
-                alpha[1]=td[1]/ta[1];
-                //forward substitution
-                for (int ii=2;ii<N+1;ii++){
-                    beta[ii]=tb[ii]/(ta[ii] - tc[ii]*beta[ii-1]);
-                    alpha[ii]=(td[ii]+tc[ii]*alpha[ii-1])/(ta[ii] - tc[ii]*beta[ii-1]);
-                }
-                //backward substitution
-                dum[N]=alpha[N];
-                for (int jj=0;jj<N-1;jj++){
-                    int ii=N-1-jj;
-                    dum[ii]=beta[ii]*dum[ii+1]+alpha[ii];
-                }
-                //end of tdma
-                for (int i=1;i<N+1;i++){  //i can be used as x marching is over
-                    te[j][i] = dum[i];
-                }
+				tdma(j);
+                
             }//marching in y ends here
 			//END marching in y
 //solve ----------------------------------------------------------------------------------
@@ -321,6 +313,29 @@ void Shell::applyBoundaryConditions(){
 					break;
 				}
 			}
+}
+void Shell::tdma(int j){
+	double alpha[N+2]{0}, beta[N+2]{0},  dum[N+2]{0};
+	for(int i = 0;i<N+2;i++){
+		alpha[i] = 1;
+		beta[i] = 1;
+		dum[i] = 1;
+	}
+	beta[1]=tb[1]/ta[1];
+    alpha[1]=td[1]/ta[1];
+    //forward substitution
+    for (int ii=2;ii<N+1;ii++){
+        beta[ii]=tb[ii]/(ta[ii] - tc[ii]*beta[ii-1]);
+        alpha[ii]=(td[ii]+tc[ii]*alpha[ii-1])/(ta[ii] - tc[ii]*beta[ii-1]);
+    }
+    //backward substitution
+    dum[N]=alpha[N];
+    for (int jj=0;jj<N-1;jj++){
+        int ii=N-1-jj;
+        dum[ii]=beta[ii]*dum[ii+1]+alpha[ii];
+    }
+    //solved value
+    for (int i=1;i<N+1;i++){te[j][i] = dum[i];}
 }
 int Shell::checkConvergence(double error){
 	double maxErr{1e-10},errorTe{0};
