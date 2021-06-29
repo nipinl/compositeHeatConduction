@@ -3,7 +3,7 @@
 #include<vector>
 using namespace std;
 bool debug = false;
-bool axi = false;//axi symmetric case; like tube
+bool axi = true;//axi symmetric case; like tube
 const int M = 5;//Number of divisions in y direction
 const int N = 3;//Number of divisions in x direction
 const double ri = 0.1;//Inner radius of the tube
@@ -18,7 +18,7 @@ const double density = 8000.0;
 const double simTime = 20.1 ;//in seconds
 
 //initial condition
-const double initTemp = 100.0;//Initial uniform temperature of the tube
+const double initTemp = 300.0;//Initial uniform temperature of the tube
 
 //boundary condition
 enum bc {constTemp, constHeatFlux, convection};
@@ -27,7 +27,7 @@ bc rbc = constTemp;
 bc tbc = constTemp;
 bc bbc = constTemp;
 //const temp bc
-const double TLeft{100},TRight{100},TBottom{100},TTop{200};
+const double TLeft{300},TRight{300},TBottom{300},TTop{500};
 
 //const heat flux bc
 const double qLeft{50},qRight{50},qBottom{5000},qTop{250};
@@ -38,7 +38,7 @@ const double hfL{50},hfR{10},hfB{10},hfT{10};
 
 int maxiter = 1000;
 double re = 1;//relaxation factor
-double dt = 1e15;//* 1e15;//dt >1e10 for steady state
+double dt = 0.1;//* 1e15;//dt >1e10 for steady state
 
 
 int main(){

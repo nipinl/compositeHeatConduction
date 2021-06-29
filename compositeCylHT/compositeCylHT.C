@@ -8,7 +8,8 @@ int main(){
 	c1.printDetail();
 	c1.populateNodes();
 	c1.populateMaterialProperties();
-	c1.initialiseTemperature();
+	c1.initialiseField();
+	c1.solveIt();
 
 	return 0;
 }

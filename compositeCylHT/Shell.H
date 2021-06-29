@@ -60,6 +60,7 @@ class Shell{
         void populateNodes();
         void populateMaterialProperties();
         void initialiseField();
+        void solveIt();
         void print2dVector(vector<vector<double>> const &v);
         void printDetail();
 };
