@@ -97,12 +97,7 @@ void Shell::initialiseField(){
 		tc.push_back(0);
 		td.push_back(0);
 	}
-	/* 
-	vector<double> ta(N+1, 0);
-	vector<double> tb(N+1, 0);
-	vector<double> tc(N+1, 0);
-	vector<double> td(N+1, 0);
- */	
+
 	for (int i = 0 ; i < M+2 ; i++) {
         te.push_back(te1d);
 		te0.push_back(te1d);
@@ -115,11 +110,6 @@ void Shell::initialiseField(){
 	Shell::print2dVector(tep);
 }
 void::Shell::solveIt(){
-	//for TDMA
-	//double ta[N+1]{0},  tb[N+1]{0},  tc[N+1]{0},  td[N+1]{0};
-	 cout<<ta[0]<<" and "<<ta[1]<<endl;
-
-
 	//for convergence checking
 	double maxErr = 1e-10;
     double error = 1.0e-9;
@@ -192,7 +182,7 @@ void::Shell::solveIt(){
                     if(i==N) td[i]=td[i]+ae*te[j][N+1];
                 }//marching in x ends here
 				//END marching in x
-                //start of tdma
+                //solve in x direction using tdma
 				tdma(j);
                 
             }//marching in y ends here
