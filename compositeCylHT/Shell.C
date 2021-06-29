@@ -104,7 +104,7 @@ void Shell::initialiseField(){
 }
 void::Shell::solveIt(){
 	//for TDMA
-	double ta[M+1][N+1]{0},  tb[M+1][N+1]{0},  tc[M+1][N+1]{0},  td[M+1][N+1]{0};
+	double ta[N+1]{0},  tb[N+1]{0},  tc[N+1]{0},  td[N+1]{0};
 	double alpha[N+2]{0}, beta[N+2]{0},  dum[N+2]{0};
 	for(int i = 0;i<N+2;i++){
 		alpha[i] = 1;
@@ -177,21 +177,21 @@ void::Shell::solveIt(){
                     a0 = rho[j][i]*cp[j][i]*vol/dt;// =0 for steady state
                     ap = ae+aw+an+as+a0 - sp[j][i]*vol;
                     b = sc[j][i]*vol+a0*te0[j][i];
-                    ta[0][i]=ap/re;
-                    tb[0][i]=ae;
-                    tc[0][i]=aw;
-                    td[0][i]=b+ap/re*(1-re)*te[j][i]+an*te[j+1][i]+as*te[j-1][i];
-                    if(i==1) td[0][i]=td[0][i]+aw*te[j][0];
-                    if(i==N) td[0][i]=td[0][i]+ae*te[j][N+1];
+                    ta[i]=ap/re;	
+                    tb[i]=ae;
+                    tc[i]=aw;
+                    td[i]=b+ap/re*(1-re)*te[j][i]+an*te[j+1][i]+as*te[j-1][i];
+                    if(i==1) td[i]=td[i]+aw*te[j][0];
+                    if(i==N) td[i]=td[i]+ae*te[j][N+1];
                 }//marching in x ends here
 				//END marching in x
                 //start of tdma
-                beta[1]=tb[0][1]/ta[0][1];
-                alpha[1]=td[0][1]/ta[0][1];
+                beta[1]=tb[1]/ta[1];
+                alpha[1]=td[1]/ta[1];
                 //forward substitution
                 for (int ii=2;ii<N+1;ii++){
-                    beta[ii]=tb[0][ii]/(ta[0][ii] - tc[0][ii]*beta[ii-1]);
-                    alpha[ii]=(td[0][ii]+tc[0][ii]*alpha[ii-1])/(ta[0][ii] - tc[0][ii]*beta[ii-1]);
+                    beta[ii]=tb[ii]/(ta[ii] - tc[ii]*beta[ii-1]);
+                    alpha[ii]=(td[ii]+tc[ii]*alpha[ii-1])/(ta[ii] - tc[ii]*beta[ii-1]);
                 }
                 //backward substitution
                 dum[N]=alpha[N];
