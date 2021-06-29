@@ -29,7 +29,7 @@ const double hfL{50},hfR{10},hfB{10},hfT{10};
 
 int maxiter = 1000;
 double re = 1;//relaxation factor
-double dt = 0.1;//* 1e15;//dt >1e10 for steady state
+double dt = 1e15;//* 1e15;//dt >1e10 for steady state
 
 
 int main(){
@@ -40,8 +40,8 @@ int main(){
 	double dx[N+2]{0}, dy[M+2]{0};
 
 	//populate dx and dy
-	for(int i = 0;i<N+2;i++) dx[i] = Length/double(N);
-	for(int j = 0;j<M+2;j++) dy[j] = t1/double(M);
+	std::fill_n(dx,N+2,Length/double(N));
+	std::fill_n(dy,M+2,t1/double(M));
 
 	if (debug){
 		for(int i = 0;i<N+2;i++) cout << "dx["<<i<<"] = "<<dx[i]<<endl; 
