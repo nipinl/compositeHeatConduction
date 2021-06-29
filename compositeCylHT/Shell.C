@@ -1,9 +1,10 @@
 #include "Shell.H"
 
+//Constructor
 Shell::Shell():
 				axi(true),//axisymmetric, i.e., for tube
-				M(10),//divisions along y(r)
-				N(10),//divisions along x, i.e., along length
+				M(5),//divisions along y(r)
+				N(3),//divisions along x, i.e., along length
 				ri(0.1),//inner radius
 				Length(0.04),
 				Width(0.04),
@@ -35,12 +36,8 @@ ostream &operator<<(ostream& out,const Shell& C) {
 
 void Shell::populateNodes(){
 	//populate dx, dy
-	for (int i=0;i<N+2;i++){
-		dx.push_back(Length/double(N));
-	}
-	for (int j=0;j<M+2;j++){
-		dy.push_back(Width/double(M));
-	}
+	for (int i=0;i<N+2;i++){dx.push_back(Length/double(N));}
+	for (int j=0;j<M+2;j++){dy.push_back(Width/double(M));}
 	dx[0] = 1e-10;dx[N+1] = 1e-10;dy[0] = 1e-10;dy[M+1] = 1e-10;
 	
 	//populate x & y
@@ -74,10 +71,33 @@ void Shell::populateNodes(){
 	for (int j=0;j<M+3;j++){
 		cout<<y[j]<<endl;
 	} */
-
-
 }
 
+void Shell::populateMaterialProperties(){
+	//std::vector<std::vector<double>> tk(M, std::vector<double>(N, tCond));
+	vector<double> tk1d(N, tCond);
+	vector<double> cp1d(N, spHeat);
+	vector<double> rho1d(N, density);
+	for (int i = 0 ; i < M ; i++) {
+        tk.push_back(tk1d);
+		cp.push_back(cp1d);
+		rho.push_back(rho1d);
+		
+    }
+	Shell::print2dVector(tk);
+	Shell::print2dVector(cp);
+	Shell::print2dVector(rho);
+
+}
+void Shell::print2dVector(vector<vector<double>> const &v){
+	 for (auto i : v) {
+     //i is now an 1D vector
+     	for (auto j : i) {
+            cout << j << " ";
+        }
+        cout << endl;
+    }
+}
 void Shell::printDetail(){
 				if (axi) cout<<"Cylindrical shell"<<endl;
 				if (!axi) cout<<"2D rectangular shell"<<endl;

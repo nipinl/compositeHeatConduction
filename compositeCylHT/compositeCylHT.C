@@ -7,6 +7,7 @@ int main(){
 	Shell c2;
 	c1.printDetail();
 	c1.populateNodes();
+	c1.populateMaterialProperties();
 
 	return 0;
 }
