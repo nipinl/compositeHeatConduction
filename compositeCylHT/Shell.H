@@ -10,8 +10,8 @@ bool axi;//axi symmetric case; like tube
 int M;//Number of divisions in y direction
 int N;//Number of divisions in x direction
 double ri;//Inner radius of the tube
-double Width;//thickness of the tube
 double Length;//Length of the cylinder
+double Width;//thickness of the tube
 //Material properties
 double tCond; 
 double spHeat;
@@ -21,6 +21,10 @@ double simTime;//in seconds
 //Initial condition
 double initTemp;//Initial uniform temperature of the tube
 
+//Boundary conditions
+enum bc {constTemp, constHeatFlux, convection};
+bc lbc,rbc,bbc,tbc;
+
 // temp bc
 double TLeft,TRight,TBottom,TTop;
 
@@ -28,7 +32,7 @@ double TLeft,TRight,TBottom,TTop;
 double qLeft,qRight,qBottom,qTop;
 
 //convection
-double TfLeft,TfRight,TfBottom,TfTop{;
+double TfLeft,TfRight,TfBottom,TfTop;
 double hfL,hfR,hfB,hfT;
 
 int maxiter;
@@ -37,10 +41,10 @@ double dt;//* 1e15;//dt >1e10 for steady state
 
 public:
 Shell();
-Shell(double real, double img);
-Shell(const Shell &C);
+//Shell(double real, double img);
+//Shell(const Shell &C);
 const Shell & operator=(const Shell &other);
-printDetail();
+void printDetail();
 double getReal()const {return M;}
 double getImg()const {return N;}
 };
