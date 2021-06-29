@@ -6,7 +6,7 @@ int main(){
 	Shell c1;
 	Shell c2;
 	c1.printDetail();
-	c2.printDetail();
+	c1.populateNodes();
 
 	return 0;
 }

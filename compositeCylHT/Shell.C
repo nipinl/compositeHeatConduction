@@ -33,6 +33,50 @@ ostream &operator<<(ostream& out,const Shell& C) {
 	return out;
 }
 
+void Shell::populateNodes(){
+	//populate dx, dy
+	for (int i=0;i<N+2;i++){
+		dx.push_back(Length/double(N));
+	}
+	for (int j=0;j<M+2;j++){
+		dy.push_back(Width/double(M));
+	}
+	dx[0] = 1e-10;dx[N+1] = 1e-10;dy[0] = 1e-10;dy[M+1] = 1e-10;
+	
+	//populate x & y
+	for (int i=0;i<N+3;i++){
+		if (i==0) x.push_back(0);
+		if (i>0) x.push_back(x[i-1]+dx[i-1]);
+	}
+	for (int j=0;j<M+3;j++){
+		if (j==0){
+			if (!axi) y.push_back(0);
+			if (axi) y.push_back(ri);
+		}
+		if (j>0) y.push_back(y[j-1]+dy[j-1]);
+	}
+	/* cout<<  "dx:" <<endl<<endl;
+	for (int i=0;i<N+2;i++){
+		cout<<dx[i]<<endl;
+	}
+	
+	cout<<  "dy:" <<endl<<endl;
+	for (int j=0;j<M+2;j++){
+		cout<<dy[j]<<endl;
+	}
+	
+	cout<<  "x:" <<endl<<endl;
+	for (int i=0;i<N+3;i++){
+		cout<<x[i]<<endl;
+	}
+
+	cout<<  "y:" <<endl<<endl;
+	for (int j=0;j<M+3;j++){
+		cout<<y[j]<<endl;
+	} */
+
+
+}
 
 void Shell::printDetail(){
 				if (axi) cout<<"Cylindrical shell"<<endl;
