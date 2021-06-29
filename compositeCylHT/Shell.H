@@ -42,7 +42,8 @@ class Shell{
 
         vector<double> x,y,dx,dy;
         vector<vector<double>> tk,cp,rho;
-
+        vector<vector<double>> te0,tep,te;
+        vector<vector<double>> sc,sp;
         //{0}, y[M+3]{0}, dx[N+2]{0}, dy[M+2]{0};
 
 
@@ -58,6 +59,7 @@ class Shell{
         double getImg()const {return N;}
         void populateNodes();
         void populateMaterialProperties();
+        void initialiseField();
         void print2dVector(vector<vector<double>> const &v);
         void printDetail();
 };

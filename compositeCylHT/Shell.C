@@ -75,19 +75,28 @@ void Shell::populateNodes(){
 
 void Shell::populateMaterialProperties(){
 	//std::vector<std::vector<double>> tk(M, std::vector<double>(N, tCond));
-	vector<double> tk1d(N, tCond);
-	vector<double> cp1d(N, spHeat);
-	vector<double> rho1d(N, density);
-	for (int i = 0 ; i < M ; i++) {
+	vector<double> tk1d(N+2, tCond);
+	vector<double> cp1d(N+2, spHeat);
+	vector<double> rho1d(N+2, density);
+	for (int i = 0 ; i < M+2 ; i++) {
         tk.push_back(tk1d);
 		cp.push_back(cp1d);
-		rho.push_back(rho1d);
-		
+		rho.push_back(rho1d);		
     }
 	Shell::print2dVector(tk);
 	Shell::print2dVector(cp);
 	Shell::print2dVector(rho);
-
+}
+void Shell::initialiseTemperature(){
+	vector<double> te1d(N+2, initTemp);
+	for (int i = 0 ; i < M+2 ; i++) {
+        te.push_back(te1d);
+		te0.push_back(te1d);
+		tep.push_back(te1d);	
+    }
+	Shell::print2dVector(te);
+	Shell::print2dVector(te0);
+	Shell::print2dVector(tep);
 }
 void Shell::print2dVector(vector<vector<double>> const &v){
 	 for (auto i : v) {

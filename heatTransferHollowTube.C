@@ -4,8 +4,8 @@
 using namespace std;
 bool debug = false;
 bool axi = false;//axi symmetric case; like tube
-const int M = 10;//Number of divisions in y direction
-const int N = 10;//Number of divisions in x direction
+const int M = 5;//Number of divisions in y direction
+const int N = 3;//Number of divisions in x direction
 const double ri = 0.1;//Inner radius of the tube
 const double Width = 0.04;//thickness of the tube
 const double Length = 0.04;//Length of the cylinder
