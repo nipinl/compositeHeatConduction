@@ -57,12 +57,7 @@ class Shell{
         void setConstantTempBC(string boundary= "Left", double Temp = 300);
         void setConstantHeatfluxBC(string boundary= "Bottom", double q = 0);
         void setConvectionBC(string boundary= "Top", double Tinf=300, double h = 10);
-        void preprocessShell();
-            void populateNodes();
-            void populateMaterialProperties();
-            void initialiseField();
-        void solveShell();
-        
+                
         //getters
         bool isConnected();//checks if shell is connected to other.
         bool getType();
@@ -70,10 +65,21 @@ class Shell{
         double getWidth();
         double getInnerRadius();
 
+        //preprocessors
+        void preprocessShell();
+            void populateNodes();
+            void populateMaterialProperties();
+            void initialiseField();
+
+        //solvers
         void advanceOneTimeStep();
         void applyBoundaryConditions();
         void tdma(int);
         int checkConvergence(double);
+        void solveShell();
+
+
+        //printers
         void print2dVector(vector<vector<double>> const &v);
         void printDetail();
 };

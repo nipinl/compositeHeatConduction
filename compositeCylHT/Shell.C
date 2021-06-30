@@ -144,7 +144,23 @@ void Shell::setConvectionBC(string boundary, double Tinf, double h)
 void Shell::setInitialTemp(double initialTemp){
 	initTemp = initialTemp;
 }
-//preprocess 
+
+//getters
+bool Shell::isConnected() { return connected; }
+bool Shell::getType() { return axi; }
+double Shell::getLength() { return Length; }
+double Shell::getWidth() { return Width; }
+double Shell::getInnerRadius()
+{
+	if (!axi)
+	{
+		cout << " No inner radius for a rectangular shell" << endl;
+		exit(1);
+	}
+	return ri;
+}
+
+//preprocessors 
 void Shell::preprocessShell(){
 	populateNodes();
 	populateMaterialProperties();
@@ -219,7 +235,8 @@ void Shell::preprocessShell(){
 		sp.push_back(scsp1d);
 	}
 }
-//solve
+
+//solvers
 void ::Shell::advanceOneTimeStep()
 {
 	//for convergence checking
@@ -497,21 +514,7 @@ void ::Shell::advanceOneTimeStep()
 		return iflag;
 	}
 
-//getters
-bool Shell::isConnected() { return connected; }
-bool Shell::getType() { return axi; }
-double Shell::getLength() { return Length; }
-double Shell::getWidth() { return Width; }
-double Shell::getInnerRadius()
-{
-	if (!axi)
-	{
-		cout << " No inner radius for a rectangular shell" << endl;
-		exit(1);
-	}
-	return ri;
-}
-
+//printers
 void Shell::print2dVector(vector<vector<double>> const &v)
 {
 	for (auto i : v)
