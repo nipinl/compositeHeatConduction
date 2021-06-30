@@ -58,6 +58,7 @@ class Shell{
         void populateNodes();
         void populateMaterialProperties(double Thermal_cond=16,double Cp = 500,double Density = 8000);
         void initialiseField(double initialTemp = 300);
+        //void solveShell();
         
         //getters
         bool isConnected();//checks if shell is connected to other.

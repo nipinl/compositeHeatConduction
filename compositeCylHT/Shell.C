@@ -62,6 +62,8 @@ void Shell::setConvectionBC(string boundary, double Tinf, double h){
 	else{ cout<<"Wrong boundary specified in Convection boundary condition"<<endl;exit(1);}
 	
 }
+
+
 void Shell::populateNodes(){
 	//populate dx, dy
 	for (int i=0;i<N+2;i++){dx.push_back(Length/double(N));}
@@ -100,7 +102,6 @@ void Shell::populateNodes(){
 		cout<<y[j]<<endl;
 	} */
 }
-
 void Shell::populateMaterialProperties(double Thermal_cond,double Cp,double Density){
 	tCond = Thermal_cond;
 	spHeat = Cp;
@@ -114,9 +115,9 @@ void Shell::populateMaterialProperties(double Thermal_cond,double Cp,double Dens
 		cp.push_back(cp1d);
 		rho.push_back(rho1d);		
     }
-	Shell::print2dVector(tk);
+/* 	Shell::print2dVector(tk);
 	Shell::print2dVector(cp);
-	Shell::print2dVector(rho);
+	Shell::print2dVector(rho); */
 }
 void Shell::initialiseField(double initialTemp){
 	initTemp = initialTemp;
@@ -137,21 +138,7 @@ void Shell::initialiseField(double initialTemp){
 		sc.push_back(scsp1d);	
 		sp.push_back(scsp1d);
     }
-	Shell::print2dVector(te);
-	Shell::print2dVector(te0);
-	Shell::print2dVector(tep);
 }
-
-//getters
-bool Shell::isConnected(){return connected;}
-bool Shell::getType(){	return axi;}
-double Shell::getLength(){	return Length;}
-double Shell::getWidth(){	return Width;}
-double Shell::getInnerRadius(){
-	if(!axi) {cout<<" No inner radius for a rectangular shell"<<endl;exit(1);}
-	return ri;
-}
-
 void::Shell::solveIt(){
 	//for convergence checking
 	double maxErr = 1e-10;
@@ -176,9 +163,6 @@ void::Shell::solveIt(){
 
 			//Enforce boundary conditions
 			
-			 
-
-
 			//add source terms if any. Now nothing
 			for (int j=0;j<M+2;j++) {
                 for (int i=0;i<N+2;i++) {
@@ -251,19 +235,13 @@ void::Shell::solveIt(){
             }
         }
         
-		for (int i=0;i<N+2;i++) {
-         	for (int j=0;j<M+2;j++) {
-                cout<<te[j][i]<<"  ";
-           	}
-			cout<<endl;
-       	}
-            
+		Shell::print2dVector(te);
         
 	//end of while loop checking t<simTime
 	//--------------------Outer Loop ---------------------------------------------
-
 }
-void Shell::applyBoundaryConditions(){
+
+	void Shell::applyBoundaryConditions(){//calls inside soveIt
 	//tube inlet, which is along r(or y) direction            
 			for (int j=0;j<M+2;j++){
 				switch (lbc)
@@ -342,7 +320,7 @@ void Shell::applyBoundaryConditions(){
 				}
 			}
 }
-void Shell::tdma(int j){
+	void Shell::tdma(int j){//calls inside soveIt
 	double alpha[N+2]{0}, beta[N+2]{0},  dum[N+2]{0};
 	for(int i = 0;i<N+2;i++){
 		alpha[i] = 1;
@@ -365,7 +343,7 @@ void Shell::tdma(int j){
     //solved value
     for (int i=1;i<N+1;i++){te[j][i] = dum[i];}
 }
-int Shell::checkConvergence(double error){
+	int Shell::checkConvergence(double error){//calls inside soveIt
 	double maxErr{1e-10},errorTe{0};
 	int iflag =1;
 
@@ -390,6 +368,18 @@ int Shell::checkConvergence(double error){
     }
 	return iflag;
 }
+
+//getters
+bool Shell::isConnected(){return connected;}
+bool Shell::getType(){	return axi;}
+double Shell::getLength(){	return Length;}
+double Shell::getWidth(){	return Width;}
+double Shell::getInnerRadius(){
+	if(!axi) {cout<<" No inner radius for a rectangular shell"<<endl;exit(1);}
+	return ri;
+}
+
+
 void Shell::print2dVector(vector<vector<double>> const &v){
 	 for (auto i : v) {
      //i is now an 1D vector
