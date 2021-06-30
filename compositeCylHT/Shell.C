@@ -8,7 +8,7 @@ Shell::Shell():
 				ri(0.1),//inner radius
 				Length(0.04),
 				Width(0.04),
-				tCond(2),spHeat(10),density(8000),
+				tCond(16),spHeat(500),density(8000),
 				initTemp(300),
 				lbc(constTemp),rbc(constTemp),bbc(constTemp),tbc(constTemp),
 				TLeft(300),TRight(300),TBottom(300),TTop(500),
@@ -24,6 +24,34 @@ Shell::Shell():
 void Shell::setTimes(double simtime, double delt){
 	simTime = simtime;
 	dt = delt;
+}
+void Shell::setMaterialProperties(double Thermal_cond,double Cp,double Density){
+	tCond = Thermal_cond;
+	spHeat = Cp;
+	density = Density;
+}
+void Shell::setConstantTempBC(string boundary, double Temp){
+	if (boundary=="Left"){lbc = constTemp; TLeft = Temp;}
+	else if (boundary=="Right"){rbc = constTemp; TRight = Temp;}
+	else if (boundary=="Bottom"){bbc = constTemp; TBottom = Temp;}
+	else if (boundary=="Top"){tbc = constTemp; TTop = Temp;}
+	else{ cout<<"Wrong boundary specified in constantTemp boundary condition"<<endl;exit(1);}
+	
+}
+void Shell::setConstantHeatfluxBC(string boundary, double q){
+	if (boundary=="Left"){lbc = constHeatFlux; qLeft = q;}
+	else if (boundary=="Right"){rbc = constHeatFlux; qRight = q;}
+	else if (boundary=="Bottom"){bbc = constHeatFlux; qBottom = q;}
+	else if (boundary=="Top"){tbc = constHeatFlux; qTop = q;}
+	else{ cout<<"Wrong boundary specified in constantHeatflux boundary condition"<<endl;exit(1);}
+}
+void Shell::setConvectionBC(string boundary, double Tinf, double h){
+	if (boundary=="Left"){lbc = convection; TfLeft = Tinf, hfL = h;}
+	else if (boundary=="Right"){rbc = convection; TfRight = Tinf, hfR = h;}
+	else if (boundary=="Bottom"){bbc = convection; TfBottom = Tinf, hfB = h;}
+	else if (boundary=="Top"){tbc = convection; TfTop = Tinf, hfT = h;}
+	else{ cout<<"Wrong boundary specified in Convection boundary condition"<<endl;exit(1);}
+	
 }
 void Shell::populateNodes(){
 	//populate dx, dy
