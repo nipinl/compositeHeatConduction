@@ -7,7 +7,7 @@ Shell::Shell():
 				N(3),//divisions along x, i.e., along length
 				ri(0.1),//inner radius
 				Length(0.04),
-				Width(0.04),
+				Width(0.02),
 				tCond(16),spHeat(500),density(8000),
 				initTemp(300),
 				lbc(constTemp),rbc(constTemp),bbc(constTemp),tbc(constTemp),
@@ -25,7 +25,15 @@ void Shell::setTimes(double simtime, double delt){
 	simTime = simtime;
 	dt = delt;
 }
-
+void Shell::setGeometry(double length, double width, bool cylindrical){
+	bool err = false;
+	if(length<=0){cout<<"Length shall be realistic"<<endl; err=true;}
+	if(width<=0){cout<<"Width shall be realistic"<<endl; err=true;}
+	if (err) exit(1);
+	Length = length;
+	Width = width;
+	axi = cylindrical;
+}
 void Shell::setConstantTempBC(string boundary, double Temp){
 	if (boundary=="Left"){lbc = constTemp; TLeft = Temp;}
 	else if (boundary=="Right"){rbc = constTemp; TRight = Temp;}

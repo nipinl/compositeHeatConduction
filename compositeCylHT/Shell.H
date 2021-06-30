@@ -48,6 +48,7 @@ class Shell{
 
     public:
         Shell();
+        void setGeometry(double length=0.04, double width = 0.02, bool cylindrical=true);
         void setTimes(double simtime=20, double delt=0.1);
         void setConstantTempBC(string boundary= "Left", double Temp = 300);
         void setConstantHeatfluxBC(string boundary= "Bottom", double q = 0);

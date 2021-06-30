@@ -6,6 +6,7 @@ int main(){
 	double dt = 0.2;//* 1e15;//dt >1e10 for steady state
 	double initialTemp = 300;
 	Shell c1;
+	c1.setGeometry(0.5,0.05,false);
 	c1.setTimes(simTime);
 	c1.setConvectionBC("Top",500,100);
 	c1.setConvectionBC("Bottom",400,90);
