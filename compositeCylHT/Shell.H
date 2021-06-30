@@ -6,6 +6,7 @@ using namespace std;
 class Shell{
     protected:
         bool axi;//axi symmetric case; like tube
+        bool connected;
         const int M;//Number of divisions in y direction
         int N;//Number of divisions in x direction
         double ri;//Inner radius of the tube
@@ -48,7 +49,8 @@ class Shell{
 
     public:
         Shell();
-        void setGeometry(double length=0.04, double width = 0.02, bool cylindrical=true);
+        //setters
+        void setGeometry(double length=0.04, double width = 0.02, bool cylindrical=true, double innerRadius = 0.1);
         void setTimes(double simtime=20, double delt=0.1);
         void setConstantTempBC(string boundary= "Left", double Temp = 300);
         void setConstantHeatfluxBC(string boundary= "Bottom", double q = 0);
@@ -56,6 +58,14 @@ class Shell{
         void populateNodes();
         void populateMaterialProperties(double Thermal_cond=16,double Cp = 500,double Density = 8000);
         void initialiseField(double initialTemp = 300);
+        
+        //getters
+        bool isConnected();
+        bool getType();
+        double getLength();
+        double getWidth();
+        double getInnerRadius();
+
         void solveIt();
         void applyBoundaryConditions();
         void tdma(int);
@@ -63,4 +73,7 @@ class Shell{
         void print2dVector(vector<vector<double>> const &v);
         void printDetail();
 };
+
+void connectShells(Shell& s1,Shell& s2, double gap=0.01, double interfaceResistance=0);
+
 #endif

@@ -6,7 +6,9 @@ int main(){
 	double dt = 0.2;//* 1e15;//dt >1e10 for steady state
 	double initialTemp = 300;
 	Shell c1;
-	c1.setGeometry(0.5,0.05,false);
+	Shell c2;
+	c2.setGeometry(0.5,0.05,true,0.15);
+	connectShells(c1,c2);
 	c1.setTimes(simTime);
 	c1.setConvectionBC("Top",500,100);
 	c1.setConvectionBC("Bottom",400,90);
@@ -18,7 +20,6 @@ int main(){
 	c1.printDetail();
 
 
-	Shell c2;
 	c2.populateNodes();
 	c2.populateMaterialProperties(5);
 	c2.initialiseField(800);

@@ -3,6 +3,7 @@
 //Constructor
 Shell::Shell():
 				axi(true),//axisymmetric, i.e., for tube
+				connected(false),//this shell is not connected to other
 				M(5),//divisions along y(r)
 				N(3),//divisions along x, i.e., along length
 				ri(0.1),//inner radius
@@ -25,7 +26,7 @@ void Shell::setTimes(double simtime, double delt){
 	simTime = simtime;
 	dt = delt;
 }
-void Shell::setGeometry(double length, double width, bool cylindrical){
+void Shell::setGeometry(double length, double width, bool cylindrical, double innerRadius){
 	bool err = false;
 	if(length<=0){cout<<"Length shall be realistic"<<endl; err=true;}
 	if(width<=0){cout<<"Width shall be realistic"<<endl; err=true;}
@@ -33,6 +34,8 @@ void Shell::setGeometry(double length, double width, bool cylindrical){
 	Length = length;
 	Width = width;
 	axi = cylindrical;
+	ri = innerRadius;
+	if(!cylindrical) ri =-1;
 }
 void Shell::setConstantTempBC(string boundary, double Temp){
 	if (boundary=="Left"){lbc = constTemp; TLeft = Temp;}
@@ -136,6 +139,17 @@ void Shell::initialiseField(double initialTemp){
 	Shell::print2dVector(te0);
 	Shell::print2dVector(tep);
 }
+
+//getters
+bool Shell::isConnected(){return connected;}
+bool Shell::getType(){	return axi;}
+double Shell::getLength(){	return Length;}
+double Shell::getWidth(){	return Width;}
+double Shell::getInnerRadius(){
+	if(!axi) {cout<<" No inner radius for a rectangular shell"<<endl;exit(1);}
+	return ri;
+}
+
 void::Shell::solveIt(){
 	//for convergence checking
 	double maxErr = 1e-10;
@@ -466,4 +480,25 @@ void Shell::printDetail(){
 				cout<<"Maximum iteration :"<<maxiter<<endl;
 				cout<<"Relaxation coefficient :"<<re<<endl;
 				cout<<"Time step(s) :"<<dt<<endl;
+}
+
+
+//non member function methods
+void connectShells(Shell& s1,Shell& s2, double gap, double interfaceResistance){
+	if (s1.isConnected || s2.isConnected){cout<<"Error: One of the shell is already connected"<<endl;exit(1);}
+	bool err=false;
+	if (s1.getType() && !s2.getType()){cout<<"Incompatible connection. First Shell is cylindrical and second is rectangular"<<endl;err=true;}
+	if (!s1.getType() && s2.getType()){cout<<"Incompatible connection. First Shell is rectangular and second is cylindrical"<<endl;err=true;}
+
+	
+	if (s1.getType() && s2.getType()){//checking if both are cylindrical
+		if (s2.getInnerRadius()<(s1.getInnerRadius()+s1.getWidth())){
+			cout<<"Cannot connect !!. Inner radius of second shell is smaller than the outer radius of first shell"<<endl;
+			err=true;
+		}
+	}
+	if (err)exit(1);
+
+
+	
 }
