@@ -52,13 +52,16 @@ class Shell{
         void setConnected();//change the connection flag to true
         void setGeometry(double length=0.04, double width = 0.02, bool cylindrical=true, double innerRadius = 0.1);
         void setTimes(double simtime=20, double delt=0.1);
+        void setMaterialProperties(double Thermal_cond=16,double Cp = 500,double Density = 8000);
+        void setInitialTemp(double initialTemp = 300);
         void setConstantTempBC(string boundary= "Left", double Temp = 300);
         void setConstantHeatfluxBC(string boundary= "Bottom", double q = 0);
         void setConvectionBC(string boundary= "Top", double Tinf=300, double h = 10);
+        
         void populateNodes();
-        void populateMaterialProperties(double Thermal_cond=16,double Cp = 500,double Density = 8000);
-        void initialiseField(double initialTemp = 300);
-        //void solveShell();
+        void populateMaterialProperties();
+        void initialiseField();
+        void solveShell();
         
         //getters
         bool isConnected();//checks if shell is connected to other.

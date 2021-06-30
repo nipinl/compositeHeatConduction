@@ -12,8 +12,8 @@ int main(){
 	connectShells(c1,c2);
 
 	c1.populateNodes();
-	c1.populateMaterialProperties(5);
-	c1.initialiseField(800);
+	c1.populateMaterialProperties();
+	c1.initialiseField();
 	c1.printDetail();
 
 	c2.setConstantTempBC("Left",100);
@@ -21,8 +21,8 @@ int main(){
 	c2.setConstantTempBC("Bottom",400);
 	c2.setConstantTempBC("Top",200);
 	c2.populateNodes();
-	c2.populateMaterialProperties(5);
-	c2.initialiseField(100);
+	c2.populateMaterialProperties();
+	c2.initialiseField();
 	double t=0;//time
 	while(t<simTime){
 		c1.solveIt();
