@@ -106,7 +106,8 @@ void Shell::populateMaterialProperties(){
 	Shell::print2dVector(cp);
 	Shell::print2dVector(rho);
 }
-void Shell::initialiseField(){
+void Shell::initialiseField(double initialTemp){
+	initTemp = initialTemp;
 	vector<double> te1d(N+2, initTemp);
 	vector<double> scsp1d(N+2, 0);
 	for (int i = 0; i < N+1; i++)
@@ -403,7 +404,7 @@ void Shell::printDetail(){
 					cout<<"Left boundary condition is constHeatFlux of "<<qLeft<<" watts"<<endl;
 					break;
 				case convection:
-					cout<<"Left boundary condition is connvection with Tf = "<<TfLeft<<" K and hf = "<<hfL<<"W/m-k "<<endl;
+					cout<<"Left boundary condition is connvection with Tf = "<<TfLeft<<" K and hf = "<<hfL<<" W/m-k "<<endl;
 					break;
 				default:
 					cout<<"Invalid boundary condition "<<endl;

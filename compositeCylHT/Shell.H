@@ -55,7 +55,7 @@ class Shell{
         void setConvectionBC(string boundary= "Top", double Tinf=300, double h = 10);
         void populateNodes();
         void populateMaterialProperties();
-        void initialiseField();
+        void initialiseField(double initialTemp = 300);
         void solveIt();
         void applyBoundaryConditions();
         void tdma(int);

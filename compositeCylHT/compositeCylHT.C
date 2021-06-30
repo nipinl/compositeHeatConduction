@@ -15,7 +15,7 @@ int main(){
 	c1.printDetail();
 	 c1.populateNodes();
 	c1.populateMaterialProperties();
-	c1.initialiseField();
+	c1.initialiseField(800);
 	double t=0;//time
 	while(t<simTime){
 		c1.solveIt();
