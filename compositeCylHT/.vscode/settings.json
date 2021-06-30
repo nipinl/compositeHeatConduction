@@ -1,0 +1,30 @@
+{
+    "files.associations": {
+        "002_standardException.C": "cpp",
+        "003_customException.C": "cpp",
+        "004_standardException.C": "cpp",
+        "iostream": "cpp",
+        "005_writing.C": "cpp",
+        "006_reading.C": "cpp",
+        "007_parsing.C": "cpp",
+        "008_binary.C": "cpp",
+        "020_sets.C": "cpp",
+        "021_stack_queue.C": "cpp",
+        "022_sortingVectors.C": "cpp",
+        "023_stl.C": "cpp",
+        "024_overloading.C": "cpp",
+        "018_mapsCustomObjectsAsKeys.C": "cpp",
+        "025_overloadingInsertionOperatorForPrinting.C": "cpp",
+        "026_aComplexNumberClass.C": "cpp",
+        "complex.C": "cpp",
+        "complex.H": "h",
+        "shell.C": "cpp",
+        "main.C": "cpp",
+        "compositeCylHT.C": "cpp",
+        "Shell.C": "cpp",
+        "Shel.H": "h",
+        "random": "c",
+        "ostream": "cpp",
+        "vector": "cpp"
+    }
+}
