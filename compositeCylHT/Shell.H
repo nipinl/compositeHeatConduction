@@ -49,12 +49,11 @@ class Shell{
     public:
         Shell();
         void setTimes(double simtime=20, double delt=0.1);
-        void setMaterialProperties(double Thermal_cond=16,double Cp = 500,double Density = 8000);
         void setConstantTempBC(string boundary= "Left", double Temp = 300);
         void setConstantHeatfluxBC(string boundary= "Bottom", double q = 0);
         void setConvectionBC(string boundary= "Top", double Tinf=300, double h = 10);
         void populateNodes();
-        void populateMaterialProperties();
+        void populateMaterialProperties(double Thermal_cond=16,double Cp = 500,double Density = 8000);
         void initialiseField(double initialTemp = 300);
         void solveIt();
         void applyBoundaryConditions();

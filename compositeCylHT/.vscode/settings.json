@@ -25,6 +25,7 @@
         "Shel.H": "h",
         "random": "c",
         "ostream": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "string": "cpp"
     }
 }

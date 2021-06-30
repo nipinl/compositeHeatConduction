@@ -25,11 +25,7 @@ void Shell::setTimes(double simtime, double delt){
 	simTime = simtime;
 	dt = delt;
 }
-void Shell::setMaterialProperties(double Thermal_cond,double Cp,double Density){
-	tCond = Thermal_cond;
-	spHeat = Cp;
-	density = Density;
-}
+
 void Shell::setConstantTempBC(string boundary, double Temp){
 	if (boundary=="Left"){lbc = constTemp; TLeft = Temp;}
 	else if (boundary=="Right"){rbc = constTemp; TRight = Temp;}
@@ -92,8 +88,11 @@ void Shell::populateNodes(){
 	} */
 }
 
-void Shell::populateMaterialProperties(){
-	//std::vector<std::vector<double>> tk(M, std::vector<double>(N, tCond));
+void Shell::populateMaterialProperties(double Thermal_cond,double Cp,double Density){
+	tCond = Thermal_cond;
+	spHeat = Cp;
+	density = Density;
+
 	vector<double> tk1d(N+2, tCond);
 	vector<double> cp1d(N+2, spHeat);
 	vector<double> rho1d(N+2, density);
