@@ -24,9 +24,12 @@ Shell::Shell() : axi(true),		   //axisymmetric, i.e., for tube
 
 //setters
 void Shell::setConnected() { connected = true; }
-void Shell::setTimes(double simtime, double delt)
+void Shell::setSimulationTime(double simtime)
 {
 	simTime = simtime;
+}
+void Shell::setTimeStep(double delt)
+{
 	dt = delt;
 }
 void Shell::setGeometry(double length, double width, bool cylindrical, double innerRadius)
@@ -160,360 +163,377 @@ double Shell::getInnerRadius()
 	return ri;
 }
 
-//preprocessors 
-void Shell::preprocessShell(){
-	populateNodes();
-	populateMaterialProperties();
-	initialiseField();
+//Transient solver
+void Shell::solveTransient(double simulationTime, double delt){
+	setSimulationTime(simulationTime);
+	setTimeStep(delt);
+	preprocessShell();
+	double t{0};
+	while(t<simTime){
+		advanceOneTimeStep();
+		t=t+dt;//increment time step
+	}
 }
-	void Shell::populateNodes()
-{
-	//populate dx, dy
-	for (int i = 0; i < N + 2; i++)
-	{
-		dx.push_back(Length / double(N));
+	//preprocessors 
+	void Shell::preprocessShell(){
+		if (!dx.empty()) {cout<<"This Shell looks to be solved"<<endl;exit(1);}
+		populateNodes();
+		populateMaterialProperties();
+		initialiseField();
 	}
-	for (int j = 0; j < M + 2; j++)
+		void Shell::populateNodes()
 	{
-		dy.push_back(Width / double(M));
-	}
-	dx[0] = 1e-10;
-	dx[N + 1] = 1e-10;
-	dy[0] = 1e-10;
-	dy[M + 1] = 1e-10;
-
-	//populate x & y
-	for (int i = 0; i < N + 3; i++)
-	{
-		if (i == 0)
-			x.push_back(0);
-		if (i > 0)
-			x.push_back(x[i - 1] + dx[i - 1]);
-	}
-	for (int j = 0; j < M + 3; j++)
-	{
-		if (j == 0)
+		//populate dx, dy
+		for (int i = 0; i < N + 2; i++)
 		{
-			if (!axi)
-				y.push_back(0);
-			if (axi)
-				y.push_back(ri);
+			dx.push_back(Length / double(N));
 		}
-		if (j > 0)
-			y.push_back(y[j - 1] + dy[j - 1]);
-	}
-}
-	void Shell::populateMaterialProperties()
-{
-	vector<double> tk1d(N + 2, tCond);
-	vector<double> cp1d(N + 2, spHeat);
-	vector<double> rho1d(N + 2, density);
-	for (int i = 0; i < M + 2; i++)
-	{
-		tk.push_back(tk1d);
-		cp.push_back(cp1d);
-		rho.push_back(rho1d);
-	}
-	/* 	Shell::print2dVector(tk);
-	Shell::print2dVector(cp);
-	Shell::print2dVector(rho); */
-}
-	void Shell::initialiseField(){
-	vector<double> te1d(N + 2, initTemp);
-	vector<double> scsp1d(N + 2, 0);
-	for (int i = 0; i < N + 1; i++){
-		ta.push_back(0);
-		tb.push_back(0);
-		tc.push_back(0);
-		td.push_back(0);
-	}
-	for (int i = 0; i < M + 2; i++){
-		te.push_back(te1d);
-		te0.push_back(te1d);
-		tep.push_back(te1d);
-		sc.push_back(scsp1d);
-		sp.push_back(scsp1d);
-	}
-}
-
-//solvers
-void ::Shell::advanceOneTimeStep()
-{
-	//for convergence checking
-	double maxErr = 1e-10;
-	double error = 1.0e-9;
-
-	//defining variables for equation
-	double ke{0}, kw{0}, ks{0}, kn{0};
-	double de{0}, dw{0}, ds{0}, dn{0};
-	double ae{0}, aw{0}, as{0}, an{0};
-	double a0{0}, ap{0}, b{0}, vol{0};
-	double sae{0}, saw{0}, san{0}, sas{0};
-	//variables required for loop
-	int iter{0}, iflag = 1;
-
-	//--------------------Outer Loop ---------------------------------------------
-
-	//......................Inner Loop ........................................
-	while (iflag == 1)
-	{
-		//update properties if are dependent on temperature. Currently it is not
-
-		//Enforce boundary conditions
-
-		//add source terms if any. Now nothing
 		for (int j = 0; j < M + 2; j++)
 		{
-			for (int i = 0; i < N + 2; i++)
+			dy.push_back(Width / double(M));
+		}
+		dx[0] = 1e-10;
+		dx[N + 1] = 1e-10;
+		dy[0] = 1e-10;
+		dy[M + 1] = 1e-10;
+
+		//populate x & y
+		for (int i = 0; i < N + 3; i++)
+		{
+			if (i == 0)
+				x.push_back(0);
+			if (i > 0)
+				x.push_back(x[i - 1] + dx[i - 1]);
+		}
+		for (int j = 0; j < M + 3; j++)
+		{
+			if (j == 0)
 			{
-				sp[j][i] = 0;
-				sc[j][i] = 0;
+				if (!axi)
+					y.push_back(0);
+				if (axi)
+					y.push_back(ri);
+			}
+			if (j > 0)
+				y.push_back(y[j - 1] + dy[j - 1]);
+		}
+	}
+		void Shell::populateMaterialProperties()
+	{
+		vector<double> tk1d(N + 2, tCond);
+		vector<double> cp1d(N + 2, spHeat);
+		vector<double> rho1d(N + 2, density);
+		for (int i = 0; i < M + 2; i++)
+		{
+			tk.push_back(tk1d);
+			cp.push_back(cp1d);
+			rho.push_back(rho1d);
+		}
+		/* 	Shell::print2dVector(tk);
+		Shell::print2dVector(cp);
+		Shell::print2dVector(rho); */
+	}
+		void Shell::initialiseField(){
+		vector<double> te1d(N + 2, initTemp);
+		vector<double> scsp1d(N + 2, 0);
+		for (int i = 0; i < N + 1; i++){
+			ta.push_back(0);
+			tb.push_back(0);
+			tc.push_back(0);
+			td.push_back(0);
+		}
+		for (int i = 0; i < M + 2; i++){
+			te.push_back(te1d);
+			te0.push_back(te1d);
+			tep.push_back(te1d);
+			sc.push_back(scsp1d);
+			sp.push_back(scsp1d);
+		}
+	}
+
+	//sub-solver methods
+	void ::Shell::advanceOneTimeStep()
+	{
+		//for convergence checking
+		double maxErr = 1e-10;
+		double error = 1.0e-9;
+
+		//defining variables for equation
+		double ke{0}, kw{0}, ks{0}, kn{0};
+		double de{0}, dw{0}, ds{0}, dn{0};
+		double ae{0}, aw{0}, as{0}, an{0};
+		double a0{0}, ap{0}, b{0}, vol{0};
+		double sae{0}, saw{0}, san{0}, sas{0};
+		//variables required for loop
+		int iter{0}, iflag = 1;
+
+		//--------------------Outer Loop ---------------------------------------------
+
+		//......................Inner Loop ........................................
+		while (iflag == 1)
+		{
+			//update properties if are dependent on temperature. Currently it is not
+
+			//Enforce boundary conditions
+
+			//add source terms if any. Now nothing
+			for (int j = 0; j < M + 2; j++)
+			{
+				for (int i = 0; i < N + 2; i++)
+				{
+					sp[j][i] = 0;
+					sc[j][i] = 0;
+				}
+			}
+			applyBoundaryConditions();
+			// solve -------------------------------------------
+			//START marching in y
+			for (int j = 1; j < M + 1; j++)
+			{
+				//START marching in x
+				for (int i = 1; i < N + 1; i++)
+				{
+					if (!axi)
+					{
+						sae = dy[j];
+						saw = sae;
+					}
+					if (axi)
+					{
+						sae = dy[j] * (y[j] + y[j + 1]) / 2.0;
+						saw = sae;
+					}
+					ke = tk[j][i] * tk[j][i + 1] * (dx[i] + dx[i + 1]) / (dx[i] * tk[j][i + 1] + dx[i + 1] * tk[j][i]);
+					de = 2.0 * ke * sae / (dx[i] + dx[i + 1]);
+					ae = de;
+					kw = tk[j][i] * tk[j][i - 1] * (dx[i] + dx[i - 1]) / (dx[i] * tk[j][i - 1] + dx[i - 1] * tk[j][i]);
+					dw = 2.0 * kw * saw / (dx[i] + dx[i - 1]);
+					aw = dw;
+					if (!axi)
+					{
+						san = dx[i];
+						sas = san;
+					}
+					if (axi)
+					{
+						san = dx[i] * y[j + 1];
+						sas = dx[i] * y[j];
+					}
+
+					kn = tk[j][i] * tk[j + 1][i] * (dy[j] + dy[j + 1]) / (dy[j] * tk[j + 1][i] + dy[j + 1] * tk[j][i]);
+					dn = 2.0 * kn * san / (dy[j] + dy[j + 1]);
+					an = dn;
+					ks = tk[j][i] * tk[j - 1][i] * (dy[j] + dy[j - 1]) / (dy[j] * tk[j - 1][i] + dy[j - 1] * tk[j][i]);
+					ds = 2.0 * ks * sas / (dy[j] + dy[j - 1]);
+					as = ds;
+					if (!axi)
+					{
+						vol = dx[i] * dy[j];
+					}
+					if (axi)
+					{
+						vol = dx[i] * dy[j] * (y[j] + y[j + 1]) / 2.0;
+					}
+					a0 = rho[j][i] * cp[j][i] * vol / dt; // =0 for steady state
+					ap = ae + aw + an + as + a0 - sp[j][i] * vol;
+					b = sc[j][i] * vol + a0 * te0[j][i];
+					ta[i] = ap / re;
+					tb[i] = ae;
+					tc[i] = aw;
+					td[i] = b + ap / re * (1 - re) * te[j][i] + an * te[j + 1][i] + as * te[j - 1][i];
+					if (i == 1)
+						td[i] = td[i] + aw * te[j][0];
+					if (i == N)
+						td[i] = td[i] + ae * te[j][N + 1];
+				} //marching in x ends here
+				//END marching in x
+				//solve in x direction using tdma
+				tdma(j);
+
+			} //marching in y ends here
+			//END marching in y
+			//solve ----------------------------------------------------------------------------------
+			//start convergence checking ---------------------
+			iflag = checkConvergence(error);
+			if (iflag == 1)
+				iter++;
+			if (iflag == 0)
+				cout << "  Solution Converged for one time step. dt = " << dt << " in " << iter << " iterations" << endl;
+			//end convergence checking ***********************
+
+			if (iter > maxiter)
+			{
+				cout << " Iterations need to be inreased. Error in Temp is " << maxErr * 100 << " %" << endl;
+				break;
+			}
+
+		} //end of inner while loop checking iflag
+		//......................Inner Loop ........................................
+
+		for (int i = 0; i < N + 2; i++)
+		{
+			for (int j = 0; j < M + 2; j++)
+			{
+				te0[j][i] = te[j][i];
+				tep[j][i] = te0[j][i];
 			}
 		}
-		applyBoundaryConditions();
-		// solve -------------------------------------------
-		//START marching in y
-		for (int j = 1; j < M + 1; j++)
-		{
-			//START marching in x
+
+		Shell::print2dVector(te);
+
+		//end of while loop checking t<simTime
+		//--------------------Outer Loop ---------------------------------------------
+	}
+		void Shell::applyBoundaryConditions()
+		{ //calls inside advanceOneTimeStep
+			//tube inlet, which is along r(or y) direction
+			for (int j = 0; j < M + 2; j++)
+			{
+				switch (lbc)
+				{
+				case constTemp:
+					te[j][0] = TLeft;
+					break;
+				case constHeatFlux:
+					te[j][0] = te[j][1] + 0.5 * dx[1] * qLeft / tk[j][1]; //heat flux into the system is +ve
+					break;
+				case convection:
+					te[j][0] = (hfL * TfLeft + 2 * te[j][1] * tk[j][1] / dx[1]) / (hfL + 2 * tk[j][1] / dx[1]);
+					break;
+				default:
+					te[j][0] = TLeft;
+					break;
+				}
+			}
+
+			//tube outlet, which is along r(or y) direction
+			for (int j = 0; j < M + 2; j++)
+			{
+				switch (rbc)
+				{
+				case constTemp:
+					te[j][N + 1] = TRight;
+					break;
+				case constHeatFlux:
+					te[j][N + 1] = te[j][N] + 0.5 * dx[N] * qRight / tk[j][N]; //heat flux into the system is +ve
+					break;
+				case convection:
+					te[j][N + 1] = (hfR * TfRight + 2 * te[j][N] * tk[j][N] / dx[N]) / (hfR + 2 * tk[j][N] / dx[N]);
+					break;
+				default:
+					te[j][0] = TRight;
+					break;
+				}
+			}
+
+			//inside tube, which is along z(or x) direction
+			for (int i = 0; i < N + 2; i++)
+			{
+				switch (bbc)
+				{
+				case constTemp:
+					te[0][i] = TBottom;
+					break;
+				case constHeatFlux:
+					te[0][i] = te[1][i] + 0.5 * dy[1] * qBottom / tk[1][i]; //heat flux into the system is +ve
+					break;
+				case convection:
+					te[0][i] = (hfB * TfBottom + 2 * te[1][i] * tk[1][i] / dy[1]) / (hfB + 2 * tk[1][i] / dy[1]);
+					break;
+				default:
+					te[0][i] = TBottom;
+					break;
+				}
+			}
+
+			//outside tube, which is along z(or x) direction
+			for (int i = 0; i < N + 2; i++)
+			{
+				switch (tbc)
+				{
+				case constTemp:
+					te[M + 1][i] = TTop;
+					break;
+				case constHeatFlux:
+					te[M + 1][i] = te[M][i] + 0.5 * dy[M] * qTop / tk[M][i]; //heat flux into the system is +ve
+					break;
+				case convection:
+					te[M + 1][i] = (hfT * TfTop + 2 * te[M][i] * tk[M][i] / dy[M]) / (hfT + 2 * tk[M][i] / dy[M]);
+					break;
+				default:
+					te[M + 1][i] = TTop;
+					break;
+				}
+			}
+		}
+		void Shell::tdma(int j)
+		{ //calls inside advanceOneTimeStep
+			double alpha[N + 2]{0}, beta[N + 2]{0}, dum[N + 2]{0};
+			for (int i = 0; i < N + 2; i++)
+			{
+				alpha[i] = 1;
+				beta[i] = 1;
+				dum[i] = 1;
+			}
+			beta[1] = tb[1] / ta[1];
+			alpha[1] = td[1] / ta[1];
+			//forward substitution
+			for (int ii = 2; ii < N + 1; ii++)
+			{
+				beta[ii] = tb[ii] / (ta[ii] - tc[ii] * beta[ii - 1]);
+				alpha[ii] = (td[ii] + tc[ii] * alpha[ii - 1]) / (ta[ii] - tc[ii] * beta[ii - 1]);
+			}
+			//backward substitution
+			dum[N] = alpha[N];
+			for (int jj = 0; jj < N - 1; jj++)
+			{
+				int ii = N - 1 - jj;
+				dum[ii] = beta[ii] * dum[ii + 1] + alpha[ii];
+			}
+			//solved value
 			for (int i = 1; i < N + 1; i++)
 			{
-				if (!axi)
-				{
-					sae = dy[j];
-					saw = sae;
-				}
-				if (axi)
-				{
-					sae = dy[j] * (y[j] + y[j + 1]) / 2.0;
-					saw = sae;
-				}
-				ke = tk[j][i] * tk[j][i + 1] * (dx[i] + dx[i + 1]) / (dx[i] * tk[j][i + 1] + dx[i + 1] * tk[j][i]);
-				de = 2.0 * ke * sae / (dx[i] + dx[i + 1]);
-				ae = de;
-				kw = tk[j][i] * tk[j][i - 1] * (dx[i] + dx[i - 1]) / (dx[i] * tk[j][i - 1] + dx[i - 1] * tk[j][i]);
-				dw = 2.0 * kw * saw / (dx[i] + dx[i - 1]);
-				aw = dw;
-				if (!axi)
-				{
-					san = dx[i];
-					sas = san;
-				}
-				if (axi)
-				{
-					san = dx[i] * y[j + 1];
-					sas = dx[i] * y[j];
-				}
+				te[j][i] = dum[i];
+			}
+		}
+		int Shell::checkConvergence(double error)
+		{ //calls inside advanceOneTimeStep
+			double maxErr{1e-10}, errorTe{0};
+			int iflag = 1;
 
-				kn = tk[j][i] * tk[j + 1][i] * (dy[j] + dy[j + 1]) / (dy[j] * tk[j + 1][i] + dy[j + 1] * tk[j][i]);
-				dn = 2.0 * kn * san / (dy[j] + dy[j + 1]);
-				an = dn;
-				ks = tk[j][i] * tk[j - 1][i] * (dy[j] + dy[j - 1]) / (dy[j] * tk[j - 1][i] + dy[j - 1] * tk[j][i]);
-				ds = 2.0 * ks * sas / (dy[j] + dy[j - 1]);
-				as = ds;
-				if (!axi)
+			for (int j = 0; j < M + 2; j++)
+			{
+				for (int i = 0; i < N + 2; i++)
 				{
-					vol = dx[i] * dy[j];
+					errorTe = abs(te[j][i] - tep[j][i]) / te[j][i];
+					if (errorTe > maxErr)
+						maxErr = errorTe;
 				}
-				if (axi)
+			}
+			if (maxErr > error)
+			{
+				for (int i = 0; i < N + 2; i++)
 				{
-					vol = dx[i] * dy[j] * (y[j] + y[j + 1]) / 2.0;
+					for (int j = 0; j < M + 2; j++)
+					{
+						tep[j][i] = te[j][i];
+					}
 				}
-				a0 = rho[j][i] * cp[j][i] * vol / dt; // =0 for steady state
-				ap = ae + aw + an + as + a0 - sp[j][i] * vol;
-				b = sc[j][i] * vol + a0 * te0[j][i];
-				ta[i] = ap / re;
-				tb[i] = ae;
-				tc[i] = aw;
-				td[i] = b + ap / re * (1 - re) * te[j][i] + an * te[j + 1][i] + as * te[j - 1][i];
-				if (i == 1)
-					td[i] = td[i] + aw * te[j][0];
-				if (i == N)
-					td[i] = td[i] + ae * te[j][N + 1];
-			} //marching in x ends here
-			//END marching in x
-			//solve in x direction using tdma
-			tdma(j);
-
-		} //marching in y ends here
-		  //END marching in y
-		  //solve ----------------------------------------------------------------------------------
-		//start convergence checking ---------------------
-		iflag = checkConvergence(error);
-		if (iflag == 1)
-			iter++;
-		if (iflag == 0)
-			cout << "  Solution Converged for one time step. dt = " << dt << " in " << iter << " iterations" << endl;
-		//end convergence checking ***********************
-
-		if (iter > maxiter)
-		{
-			cout << " Iterations need to be inreased. Error in Temp is " << maxErr * 100 << " %" << endl;
-			break;
+				iflag = 1;
+			}
+			if (maxErr <= error)
+			{
+				iflag = 0;
+				cout << "MaxErr = " << maxErr;
+			}
+			return iflag;
 		}
 
-	} //end of inner while loop checking iflag
-	  //......................Inner Loop ........................................
-
-	for (int i = 0; i < N + 2; i++)
-	{
-		for (int j = 0; j < M + 2; j++)
-		{
-			te0[j][i] = te[j][i];
-			tep[j][i] = te0[j][i];
-		}
-	}
-
-	Shell::print2dVector(te);
-
-	//end of while loop checking t<simTime
-	//--------------------Outer Loop ---------------------------------------------
+void Shell::solveSteady(int maxIter){
+	maxiter = maxIter;
+	solveTransient(1,1e15);
 }
-	void Shell::applyBoundaryConditions()
-	{ //calls inside advanceOneTimeStep
-		//tube inlet, which is along r(or y) direction
-		for (int j = 0; j < M + 2; j++)
-		{
-			switch (lbc)
-			{
-			case constTemp:
-				te[j][0] = TLeft;
-				break;
-			case constHeatFlux:
-				te[j][0] = te[j][1] + 0.5 * dx[1] * qLeft / tk[j][1]; //heat flux into the system is +ve
-				break;
-			case convection:
-				te[j][0] = (hfL * TfLeft + 2 * te[j][1] * tk[j][1] / dx[1]) / (hfL + 2 * tk[j][1] / dx[1]);
-				break;
-			default:
-				te[j][0] = TLeft;
-				break;
-			}
-		}
-
-		//tube outlet, which is along r(or y) direction
-		for (int j = 0; j < M + 2; j++)
-		{
-			switch (rbc)
-			{
-			case constTemp:
-				te[j][N + 1] = TRight;
-				break;
-			case constHeatFlux:
-				te[j][N + 1] = te[j][N] + 0.5 * dx[N] * qRight / tk[j][N]; //heat flux into the system is +ve
-				break;
-			case convection:
-				te[j][N + 1] = (hfR * TfRight + 2 * te[j][N] * tk[j][N] / dx[N]) / (hfR + 2 * tk[j][N] / dx[N]);
-				break;
-			default:
-				te[j][0] = TRight;
-				break;
-			}
-		}
-
-		//inside tube, which is along z(or x) direction
-		for (int i = 0; i < N + 2; i++)
-		{
-			switch (bbc)
-			{
-			case constTemp:
-				te[0][i] = TBottom;
-				break;
-			case constHeatFlux:
-				te[0][i] = te[1][i] + 0.5 * dy[1] * qBottom / tk[1][i]; //heat flux into the system is +ve
-				break;
-			case convection:
-				te[0][i] = (hfB * TfBottom + 2 * te[1][i] * tk[1][i] / dy[1]) / (hfB + 2 * tk[1][i] / dy[1]);
-				break;
-			default:
-				te[0][i] = TBottom;
-				break;
-			}
-		}
-
-		//outside tube, which is along z(or x) direction
-		for (int i = 0; i < N + 2; i++)
-		{
-			switch (tbc)
-			{
-			case constTemp:
-				te[M + 1][i] = TTop;
-				break;
-			case constHeatFlux:
-				te[M + 1][i] = te[M][i] + 0.5 * dy[M] * qTop / tk[M][i]; //heat flux into the system is +ve
-				break;
-			case convection:
-				te[M + 1][i] = (hfT * TfTop + 2 * te[M][i] * tk[M][i] / dy[M]) / (hfT + 2 * tk[M][i] / dy[M]);
-				break;
-			default:
-				te[M + 1][i] = TTop;
-				break;
-			}
-		}
-	}
-	void Shell::tdma(int j)
-	{ //calls inside advanceOneTimeStep
-		double alpha[N + 2]{0}, beta[N + 2]{0}, dum[N + 2]{0};
-		for (int i = 0; i < N + 2; i++)
-		{
-			alpha[i] = 1;
-			beta[i] = 1;
-			dum[i] = 1;
-		}
-		beta[1] = tb[1] / ta[1];
-		alpha[1] = td[1] / ta[1];
-		//forward substitution
-		for (int ii = 2; ii < N + 1; ii++)
-		{
-			beta[ii] = tb[ii] / (ta[ii] - tc[ii] * beta[ii - 1]);
-			alpha[ii] = (td[ii] + tc[ii] * alpha[ii - 1]) / (ta[ii] - tc[ii] * beta[ii - 1]);
-		}
-		//backward substitution
-		dum[N] = alpha[N];
-		for (int jj = 0; jj < N - 1; jj++)
-		{
-			int ii = N - 1 - jj;
-			dum[ii] = beta[ii] * dum[ii + 1] + alpha[ii];
-		}
-		//solved value
-		for (int i = 1; i < N + 1; i++)
-		{
-			te[j][i] = dum[i];
-		}
-	}
-	int Shell::checkConvergence(double error)
-	{ //calls inside advanceOneTimeStep
-		double maxErr{1e-10}, errorTe{0};
-		int iflag = 1;
-
-		for (int j = 0; j < M + 2; j++)
-		{
-			for (int i = 0; i < N + 2; i++)
-			{
-				errorTe = abs(te[j][i] - tep[j][i]) / te[j][i];
-				if (errorTe > maxErr)
-					maxErr = errorTe;
-			}
-		}
-		if (maxErr > error)
-		{
-			for (int i = 0; i < N + 2; i++)
-			{
-				for (int j = 0; j < M + 2; j++)
-				{
-					tep[j][i] = te[j][i];
-				}
-			}
-			iflag = 1;
-		}
-		if (maxErr <= error)
-		{
-			iflag = 0;
-			cout << "MaxErr = " << maxErr;
-		}
-		return iflag;
-	}
-
+	
 //printers
 void Shell::print2dVector(vector<vector<double>> const &v)
 {

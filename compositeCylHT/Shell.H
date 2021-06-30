@@ -51,7 +51,8 @@ class Shell{
         //setters
         void setConnected();//change the connection flag to true
         void setGeometry(double length=0.04, double width = 0.02, bool cylindrical=true, double innerRadius = 0.1);
-        void setTimes(double simtime=20, double delt=0.1);
+        void setSimulationTime(double simtime=20);
+        void setTimeStep( double delt=0.1);
         void setMaterialProperties(double Thermal_cond=16,double Cp = 500,double Density = 8000);
         void setInitialTemp(double initialTemp = 300);
         void setConstantTempBC(string boundary= "Left", double Temp = 300);
@@ -76,7 +77,8 @@ class Shell{
         void applyBoundaryConditions();
         void tdma(int);
         int checkConvergence(double);
-        void solveShell();
+        void solveTransient(double simulationTime = 20, double delt = 0.1);
+        void solveSteady(int maxIter=1000);
 
 
         //printers
