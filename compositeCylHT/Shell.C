@@ -22,6 +22,8 @@ Shell::Shell():
 				dt(0.1)
 				{}
 
+//setters
+void Shell::setConnected(){connected=true;}
 void Shell::setTimes(double simtime, double delt){
 	simTime = simtime;
 	dt = delt;
@@ -485,7 +487,7 @@ void Shell::printDetail(){
 
 //non member function methods
 void connectShells(Shell& s1,Shell& s2, double gap, double interfaceResistance){
-	if (s1.isConnected || s2.isConnected){cout<<"Error: One of the shell is already connected"<<endl;exit(1);}
+	if (s1.isConnected() || s2.isConnected()){cout<<"Error: One of the shell is already connected"<<endl;exit(1);}
 	bool err=false;
 	if (s1.getType() && !s2.getType()){cout<<"Incompatible connection. First Shell is cylindrical and second is rectangular"<<endl;err=true;}
 	if (!s1.getType() && s2.getType()){cout<<"Incompatible connection. First Shell is rectangular and second is cylindrical"<<endl;err=true;}
@@ -499,6 +501,8 @@ void connectShells(Shell& s1,Shell& s2, double gap, double interfaceResistance){
 	}
 	if (err)exit(1);
 
-
+	s1.setConnected();
+	s2.setConnected();
 	
+
 }

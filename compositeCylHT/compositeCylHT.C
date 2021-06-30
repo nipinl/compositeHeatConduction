@@ -4,7 +4,7 @@ using namespace std;
 int main(){
 	double simTime = 20;
 	double dt = 0.2;//* 1e15;//dt >1e10 for steady state
-	double initialTemp = 300;
+	double initialTemp = 300;                                                                          
 	Shell c1;
 	Shell c2;
 	c2.setGeometry(0.5,0.05,true,0.15);

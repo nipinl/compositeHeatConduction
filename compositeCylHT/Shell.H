@@ -46,10 +46,10 @@ class Shell{
         vector<vector<double>> sc,sp;
         vector<double> ta,tb,tc,td;
 
-
     public:
         Shell();
         //setters
+        void setConnected();//change the connection flag to true
         void setGeometry(double length=0.04, double width = 0.02, bool cylindrical=true, double innerRadius = 0.1);
         void setTimes(double simtime=20, double delt=0.1);
         void setConstantTempBC(string boundary= "Left", double Temp = 300);
@@ -60,7 +60,7 @@ class Shell{
         void initialiseField(double initialTemp = 300);
         
         //getters
-        bool isConnected();
+        bool isConnected();//checks if shell is connected to other.
         bool getType();
         double getLength();
         double getWidth();
@@ -74,6 +74,6 @@ class Shell{
         void printDetail();
 };
 
-void connectShells(Shell& s1,Shell& s2, double gap=0.01, double interfaceResistance=0);
+void connectShells(Shell& s1,Shell& s2, double gap=0.01, double interfaceResistance=0);//assume outer(top) of first is connected to inner(bottom) of second
 
 #endif

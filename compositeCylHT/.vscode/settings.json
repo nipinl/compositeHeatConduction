@@ -26,6 +26,7 @@
         "random": "c",
         "ostream": "cpp",
         "vector": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "string_view": "cpp"
     }
 }
