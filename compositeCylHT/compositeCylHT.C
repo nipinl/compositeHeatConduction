@@ -15,11 +15,11 @@ int main(){
 	
 	c1.preprocessShell();	
 	c2.preprocessShell();
-	
+
 	double t=0;//time
 	while(t<simTime){
-		c1.solveIt();
-		c2.solveIt();
+		c1.advanceOneTimeStep();
+		c2.advanceOneTimeStep();
 		t=t+dt;//increment time step
 	} 
 	return 0;

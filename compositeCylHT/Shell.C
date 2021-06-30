@@ -220,7 +220,7 @@ void Shell::preprocessShell(){
 	}
 }
 //solve
-void ::Shell::solveIt()
+void ::Shell::advanceOneTimeStep()
 {
 	//for convergence checking
 	double maxErr = 1e-10;
@@ -353,7 +353,7 @@ void ::Shell::solveIt()
 	//--------------------Outer Loop ---------------------------------------------
 }
 	void Shell::applyBoundaryConditions()
-	{ //calls inside soveIt
+	{ //calls inside advanceOneTimeStep
 		//tube inlet, which is along r(or y) direction
 		for (int j = 0; j < M + 2; j++)
 		{
@@ -435,7 +435,7 @@ void ::Shell::solveIt()
 		}
 	}
 	void Shell::tdma(int j)
-	{ //calls inside soveIt
+	{ //calls inside advanceOneTimeStep
 		double alpha[N + 2]{0}, beta[N + 2]{0}, dum[N + 2]{0};
 		for (int i = 0; i < N + 2; i++)
 		{
@@ -465,7 +465,7 @@ void ::Shell::solveIt()
 		}
 	}
 	int Shell::checkConvergence(double error)
-	{ //calls inside soveIt
+	{ //calls inside advanceOneTimeStep
 		double maxErr{1e-10}, errorTe{0};
 		int iflag = 1;
 

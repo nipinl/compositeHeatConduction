@@ -70,7 +70,7 @@ class Shell{
         double getWidth();
         double getInnerRadius();
 
-        void solveIt();
+        void advanceOneTimeStep();
         void applyBoundaryConditions();
         void tdma(int);
         int checkConvergence(double);
