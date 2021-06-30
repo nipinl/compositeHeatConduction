@@ -144,7 +144,13 @@ void Shell::setConvectionBC(string boundary, double Tinf, double h)
 void Shell::setInitialTemp(double initialTemp){
 	initTemp = initialTemp;
 }
-void Shell::populateNodes()
+//preprocess 
+void Shell::preprocessShell(){
+	populateNodes();
+	populateMaterialProperties();
+	initialiseField();
+}
+	void Shell::populateNodes()
 {
 	//populate dx, dy
 	for (int i = 0; i < N + 2; i++)
@@ -181,7 +187,7 @@ void Shell::populateNodes()
 			y.push_back(y[j - 1] + dy[j - 1]);
 	}
 }
-void Shell::populateMaterialProperties()
+	void Shell::populateMaterialProperties()
 {
 	vector<double> tk1d(N + 2, tCond);
 	vector<double> cp1d(N + 2, spHeat);
@@ -196,7 +202,7 @@ void Shell::populateMaterialProperties()
 	Shell::print2dVector(cp);
 	Shell::print2dVector(rho); */
 }
-void Shell::initialiseField(){
+	void Shell::initialiseField(){
 	vector<double> te1d(N + 2, initTemp);
 	vector<double> scsp1d(N + 2, 0);
 	for (int i = 0; i < N + 1; i++){
@@ -213,6 +219,7 @@ void Shell::initialiseField(){
 		sp.push_back(scsp1d);
 	}
 }
+//solve
 void ::Shell::solveIt()
 {
 	//for convergence checking
@@ -345,151 +352,150 @@ void ::Shell::solveIt()
 	//end of while loop checking t<simTime
 	//--------------------Outer Loop ---------------------------------------------
 }
-
-void Shell::applyBoundaryConditions()
-{ //calls inside soveIt
-	//tube inlet, which is along r(or y) direction
-	for (int j = 0; j < M + 2; j++)
-	{
-		switch (lbc)
+	void Shell::applyBoundaryConditions()
+	{ //calls inside soveIt
+		//tube inlet, which is along r(or y) direction
+		for (int j = 0; j < M + 2; j++)
 		{
-		case constTemp:
-			te[j][0] = TLeft;
-			break;
-		case constHeatFlux:
-			te[j][0] = te[j][1] + 0.5 * dx[1] * qLeft / tk[j][1]; //heat flux into the system is +ve
-			break;
-		case convection:
-			te[j][0] = (hfL * TfLeft + 2 * te[j][1] * tk[j][1] / dx[1]) / (hfL + 2 * tk[j][1] / dx[1]);
-			break;
-		default:
-			te[j][0] = TLeft;
-			break;
-		}
-	}
-
-	//tube outlet, which is along r(or y) direction
-	for (int j = 0; j < M + 2; j++)
-	{
-		switch (rbc)
-		{
-		case constTemp:
-			te[j][N + 1] = TRight;
-			break;
-		case constHeatFlux:
-			te[j][N + 1] = te[j][N] + 0.5 * dx[N] * qRight / tk[j][N]; //heat flux into the system is +ve
-			break;
-		case convection:
-			te[j][N + 1] = (hfR * TfRight + 2 * te[j][N] * tk[j][N] / dx[N]) / (hfR + 2 * tk[j][N] / dx[N]);
-			break;
-		default:
-			te[j][0] = TRight;
-			break;
-		}
-	}
-
-	//inside tube, which is along z(or x) direction
-	for (int i = 0; i < N + 2; i++)
-	{
-		switch (bbc)
-		{
-		case constTemp:
-			te[0][i] = TBottom;
-			break;
-		case constHeatFlux:
-			te[0][i] = te[1][i] + 0.5 * dy[1] * qBottom / tk[1][i]; //heat flux into the system is +ve
-			break;
-		case convection:
-			te[0][i] = (hfB * TfBottom + 2 * te[1][i] * tk[1][i] / dy[1]) / (hfB + 2 * tk[1][i] / dy[1]);
-			break;
-		default:
-			te[0][i] = TBottom;
-			break;
-		}
-	}
-
-	//outside tube, which is along z(or x) direction
-	for (int i = 0; i < N + 2; i++)
-	{
-		switch (tbc)
-		{
-		case constTemp:
-			te[M + 1][i] = TTop;
-			break;
-		case constHeatFlux:
-			te[M + 1][i] = te[M][i] + 0.5 * dy[M] * qTop / tk[M][i]; //heat flux into the system is +ve
-			break;
-		case convection:
-			te[M + 1][i] = (hfT * TfTop + 2 * te[M][i] * tk[M][i] / dy[M]) / (hfT + 2 * tk[M][i] / dy[M]);
-			break;
-		default:
-			te[M + 1][i] = TTop;
-			break;
-		}
-	}
-}
-void Shell::tdma(int j)
-{ //calls inside soveIt
-	double alpha[N + 2]{0}, beta[N + 2]{0}, dum[N + 2]{0};
-	for (int i = 0; i < N + 2; i++)
-	{
-		alpha[i] = 1;
-		beta[i] = 1;
-		dum[i] = 1;
-	}
-	beta[1] = tb[1] / ta[1];
-	alpha[1] = td[1] / ta[1];
-	//forward substitution
-	for (int ii = 2; ii < N + 1; ii++)
-	{
-		beta[ii] = tb[ii] / (ta[ii] - tc[ii] * beta[ii - 1]);
-		alpha[ii] = (td[ii] + tc[ii] * alpha[ii - 1]) / (ta[ii] - tc[ii] * beta[ii - 1]);
-	}
-	//backward substitution
-	dum[N] = alpha[N];
-	for (int jj = 0; jj < N - 1; jj++)
-	{
-		int ii = N - 1 - jj;
-		dum[ii] = beta[ii] * dum[ii + 1] + alpha[ii];
-	}
-	//solved value
-	for (int i = 1; i < N + 1; i++)
-	{
-		te[j][i] = dum[i];
-	}
-}
-int Shell::checkConvergence(double error)
-{ //calls inside soveIt
-	double maxErr{1e-10}, errorTe{0};
-	int iflag = 1;
-
-	for (int j = 0; j < M + 2; j++)
-	{
-		for (int i = 0; i < N + 2; i++)
-		{
-			errorTe = abs(te[j][i] - tep[j][i]) / te[j][i];
-			if (errorTe > maxErr)
-				maxErr = errorTe;
-		}
-	}
-	if (maxErr > error)
-	{
-		for (int i = 0; i < N + 2; i++)
-		{
-			for (int j = 0; j < M + 2; j++)
+			switch (lbc)
 			{
-				tep[j][i] = te[j][i];
+			case constTemp:
+				te[j][0] = TLeft;
+				break;
+			case constHeatFlux:
+				te[j][0] = te[j][1] + 0.5 * dx[1] * qLeft / tk[j][1]; //heat flux into the system is +ve
+				break;
+			case convection:
+				te[j][0] = (hfL * TfLeft + 2 * te[j][1] * tk[j][1] / dx[1]) / (hfL + 2 * tk[j][1] / dx[1]);
+				break;
+			default:
+				te[j][0] = TLeft;
+				break;
 			}
 		}
-		iflag = 1;
+
+		//tube outlet, which is along r(or y) direction
+		for (int j = 0; j < M + 2; j++)
+		{
+			switch (rbc)
+			{
+			case constTemp:
+				te[j][N + 1] = TRight;
+				break;
+			case constHeatFlux:
+				te[j][N + 1] = te[j][N] + 0.5 * dx[N] * qRight / tk[j][N]; //heat flux into the system is +ve
+				break;
+			case convection:
+				te[j][N + 1] = (hfR * TfRight + 2 * te[j][N] * tk[j][N] / dx[N]) / (hfR + 2 * tk[j][N] / dx[N]);
+				break;
+			default:
+				te[j][0] = TRight;
+				break;
+			}
+		}
+
+		//inside tube, which is along z(or x) direction
+		for (int i = 0; i < N + 2; i++)
+		{
+			switch (bbc)
+			{
+			case constTemp:
+				te[0][i] = TBottom;
+				break;
+			case constHeatFlux:
+				te[0][i] = te[1][i] + 0.5 * dy[1] * qBottom / tk[1][i]; //heat flux into the system is +ve
+				break;
+			case convection:
+				te[0][i] = (hfB * TfBottom + 2 * te[1][i] * tk[1][i] / dy[1]) / (hfB + 2 * tk[1][i] / dy[1]);
+				break;
+			default:
+				te[0][i] = TBottom;
+				break;
+			}
+		}
+
+		//outside tube, which is along z(or x) direction
+		for (int i = 0; i < N + 2; i++)
+		{
+			switch (tbc)
+			{
+			case constTemp:
+				te[M + 1][i] = TTop;
+				break;
+			case constHeatFlux:
+				te[M + 1][i] = te[M][i] + 0.5 * dy[M] * qTop / tk[M][i]; //heat flux into the system is +ve
+				break;
+			case convection:
+				te[M + 1][i] = (hfT * TfTop + 2 * te[M][i] * tk[M][i] / dy[M]) / (hfT + 2 * tk[M][i] / dy[M]);
+				break;
+			default:
+				te[M + 1][i] = TTop;
+				break;
+			}
+		}
 	}
-	if (maxErr <= error)
-	{
-		iflag = 0;
-		cout << "MaxErr = " << maxErr;
+	void Shell::tdma(int j)
+	{ //calls inside soveIt
+		double alpha[N + 2]{0}, beta[N + 2]{0}, dum[N + 2]{0};
+		for (int i = 0; i < N + 2; i++)
+		{
+			alpha[i] = 1;
+			beta[i] = 1;
+			dum[i] = 1;
+		}
+		beta[1] = tb[1] / ta[1];
+		alpha[1] = td[1] / ta[1];
+		//forward substitution
+		for (int ii = 2; ii < N + 1; ii++)
+		{
+			beta[ii] = tb[ii] / (ta[ii] - tc[ii] * beta[ii - 1]);
+			alpha[ii] = (td[ii] + tc[ii] * alpha[ii - 1]) / (ta[ii] - tc[ii] * beta[ii - 1]);
+		}
+		//backward substitution
+		dum[N] = alpha[N];
+		for (int jj = 0; jj < N - 1; jj++)
+		{
+			int ii = N - 1 - jj;
+			dum[ii] = beta[ii] * dum[ii + 1] + alpha[ii];
+		}
+		//solved value
+		for (int i = 1; i < N + 1; i++)
+		{
+			te[j][i] = dum[i];
+		}
 	}
-	return iflag;
-}
+	int Shell::checkConvergence(double error)
+	{ //calls inside soveIt
+		double maxErr{1e-10}, errorTe{0};
+		int iflag = 1;
+
+		for (int j = 0; j < M + 2; j++)
+		{
+			for (int i = 0; i < N + 2; i++)
+			{
+				errorTe = abs(te[j][i] - tep[j][i]) / te[j][i];
+				if (errorTe > maxErr)
+					maxErr = errorTe;
+			}
+		}
+		if (maxErr > error)
+		{
+			for (int i = 0; i < N + 2; i++)
+			{
+				for (int j = 0; j < M + 2; j++)
+				{
+					tep[j][i] = te[j][i];
+				}
+			}
+			iflag = 1;
+		}
+		if (maxErr <= error)
+		{
+			iflag = 0;
+			cout << "MaxErr = " << maxErr;
+		}
+		return iflag;
+	}
 
 //getters
 bool Shell::isConnected() { return connected; }

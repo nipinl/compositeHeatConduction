@@ -57,10 +57,10 @@ class Shell{
         void setConstantTempBC(string boundary= "Left", double Temp = 300);
         void setConstantHeatfluxBC(string boundary= "Bottom", double q = 0);
         void setConvectionBC(string boundary= "Top", double Tinf=300, double h = 10);
-        
-        void populateNodes();
-        void populateMaterialProperties();
-        void initialiseField();
+        void preprocessShell();
+            void populateNodes();
+            void populateMaterialProperties();
+            void initialiseField();
         void solveShell();
         
         //getters
