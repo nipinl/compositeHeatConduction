@@ -676,34 +676,39 @@ void connectShells(Shell &s1, Shell &s2, double gap, double interfaceResistance)
 	s1.setConnected();
 	s2.setConnected();
 }
-void solveSystem(vector<vector<Shell>> const &v){
+void solveSystem(vector<vector<Shell>> &v){
 	int rows = v.size();
 	int cols = v[0].size();
 	int shellNo{0};
 	cout<<"rows = "<<rows<<endl;
 	cout<<"cols = "<<cols<<endl;
+	
 	//Display the details
-	for (auto i : v){
-		shellNo++;
-		for (auto shell : i){
+	for (int i = 0; i < v.size(); i++){
+        for (int j = 0; j < v[i].size(); j++){
+			shellNo++;
 			cout<<"Shell No : "<<shellNo<<endl;
-			shell.printDetail();
-		}
-	}
-    for (int i = 0; i < v.size(); i++)
-    {
-        for (int j = 0; j < v[i].size(); j++)
-        {
-			//v[i][j].preprocessShell();
-			//v[i][j].setConstantHeatfluxBC("Right",0);
+			v[i][j].printDetail();
+			v[i][j].preprocessShell();
+        }   
+    }
+	shellNo=0;
+    for (int i = 0; i < v.size(); i++){
+        for (int j = 0; j < v[i].size(); j++){
+			shellNo++;
+			cout<<"shellNo:"<<shellNo<<endl;
+			//if (j<(v[i].size()-1)) {v[i][j].setConstantHeatfluxBC("Right",0); cout<<"BC changed for "<<shellNo<<endl;}
+			//if (i<v.size()-1) v[i][j].setConstantHeatfluxBC("Bottom",0);
+        }   
+    }
+	shellNo=0;
+	for (int i = 0; i < v.size(); i++){
+        for (int j = 0; j < v[i].size(); j++){
+			shellNo++;
+			cout<<"Shell No : "<<shellNo<<endl;
+			v[i][j].printDetail();
         }   
     }
 
-	for (auto i : v){
-		for (auto shell : i){
-			shell.preprocessShell();
-			shell.setConstantHeatfluxBC("Right",0);
-		}
-	}
 
 }

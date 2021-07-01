@@ -94,6 +94,6 @@ class Shell{
 
 void connectShells(Shell& s1,Shell& s2, double gap=0.01, double interfaceResistance=0);//assume outer(top) of first is connected to inner(bottom) of second
 
-void solveSystem(vector<vector<Shell>> const &v);
+void solveSystem(vector<vector<Shell>> &v);
 
 #endif
