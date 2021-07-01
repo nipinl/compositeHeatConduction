@@ -7,7 +7,7 @@ class Shell{
     protected:
         bool axi;//axi symmetric case; like tube
         bool connected;
-        const int M;//Number of divisions in y direction
+        int M;//Number of divisions in y direction
         int N;//Number of divisions in x direction
         double ri;//Inner radius of the tube
         double Length;//Length of the cylinder

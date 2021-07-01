@@ -420,8 +420,7 @@ void Shell::solveSteady(int maxIter){
 		//end of while loop checking t<simTime
 		//--------------------Outer Loop ---------------------------------------------
 	}
-		void Shell::applyBoundaryConditions()
-		{ //calls inside advanceOneTimeStep
+		void Shell::applyBoundaryConditions(){ //calls inside advanceOneTimeStep
 			//tube inlet, which is along r(or y) direction
 			for (int j = 0; j < M + 2; j++)
 			{
@@ -731,35 +730,8 @@ void solveSystem(vector<vector<Shell>> &v){
     }
 	shellNo=0;
 
-    for (int i = 0; i < v.size(); i++){
-        for (int j = 0; j < v[i].size(); j++){
-			//setting the connection bc
-			int M = v[i][j].getM();
-			int N = v[i][j].getN();
-			if (j<(v[i].size()-1)) {
-
-				v[i][j].setConstantHeatfluxBC("Right",0);
-				for (int jj = 0; jj < M + 2; jj++){
-					double T1 = v[i][j].getTe(jj,N);
-					double T2 = v[i][j+1].getTe(jj,1);//left of right shell
-					double dx1 = v[i][j].getLength()/N;
-					double dx2 = v[i][j+1].getLength()/v[i][j+1].getN();
-					double dy  = v[i][j].getWidth()/M;
-					double k1 = v[i][j].getTk(jj,N);
-					double k2 = v[i][j+1].getTk(jj,1);
-					double Rc = 0;
-					double q = (T2 -T1)/(dy * (Rc + 0.5 * (dx1/k1 + dx2/k2) ));
-					v[i][j].setTe(jj, N+1 , v[i][j].getTe(jj,N) + 0.5 * dx1 * q / v[i][j].getTk(jj,N)); 
-					v[i][j+1].setTe(jj, 0 , v[i][j+1].getTe(jj,1) - 0.5 * dx2 * q / v[i][j+1].getTk(jj,1));
-				}
-			}
-			if (j>0) {v[i][j].setConstantHeatfluxBC("Left",0);}
-			if (i<v.size()-1) v[i][j].setConstantHeatfluxBC("Bottom",0);
-			if (i>0) {v[i][j].setConstantHeatfluxBC("Top",0);}
-
-
-        }   
-    }
+	setConnectionBC(v);
+    
 	shellNo=0;
 	for (int i = 0; i < v.size(); i++){
         for (int j = 0; j < v[i].size(); j++){
@@ -772,3 +744,170 @@ void solveSystem(vector<vector<Shell>> &v){
 
 
 }
+
+void setConnectionBC(vector<vector<Shell>> &v){
+	for (int i = 0; i < v.size(); i++){
+        for (int j = 0; j < v[i].size(); j++){
+			//setting the connection bc
+			int M1 = v[i][j].getM();
+			int N1 = v[i][j].getN();
+			//vertical connection
+			if (j<(v[i].size()-1)) {
+				int N2 = v[i][j+1].getN();//N of bottom shall can be different but M2=M1
+				for (int jj = 0; jj < M1 + 2; jj++){
+					double T1 = v[i][j].getTe(jj,N1);
+					double T2 = v[i][j+1].getTe(jj,1);//left but 1 column of right shell
+					double dx1 = v[i][j].getLength()/N1;
+					double dx2 = v[i][j+1].getLength()/N2;
+					double dy  = v[i][j].getWidth()/M1;
+					double k1 = v[i][j].getTk(jj,N1);
+					double k2 = v[i][j+1].getTk(jj,1);
+					double Rc = 0;
+					double q = (T2 -T1)/(dy * (Rc + 0.5 * (dx1/k1 + dx2/k2) ));
+					v[i][j].setTe(jj, N1+1 , v[i][j].getTe(jj,N1) + 0.5 * dx1 * q / v[i][j].getTk(jj,N1)); 
+					v[i][j+1].setTe(jj, 0 , v[i][j+1].getTe(jj,1) - 0.5 * dx2 * q / v[i][j+1].getTk(jj,1));		
+				}
+			}
+			//horizontal connection
+			if (i<v.size()-1){
+				int M2 = v[i+1][j].getM();//M of bottom shall can be different but N2=N1
+				for (int ii = 0; ii < N1 + 2; ii++){
+					double T1 = v[i][j].getTe(1,ii);
+					double T2 = v[i+1][j].getTe(M2,ii);//top but 1 row of bottom shell
+					double dy1 = v[i][j].getWidth()/M1;
+					double dy2 = v[i+1][j].getWidth()/M2;
+					double dx  = v[i][j].getLength()/N1;
+					double k1 = v[i][j].getTk(1,ii);
+					double k2 = v[i+1][j].getTk(M2,ii);
+					double Rc = 0;
+					double q = (T2 -T1)/(dx * (Rc + 0.5 * (dy1/k1 + dy2/k2) ));
+					v[i][j].setTe(0, ii , v[i][j].getTe(1,ii) + 0.5 * dy1 * q / v[i][j].getTk(1,ii)); 
+					v[i+1][j].setTe(M2+1, ii , v[i+1][j].getTe(M2,ii) - 0.5 * dy2 * q / v[i+1][j].getTk(M2,ii));
+				}
+			
+			
+			}
+
+        }   
+    }
+
+}
+void advanceOneTimeStep(Shell &s)
+	{
+		//for convergence checking
+		double maxErr = 1e-10;
+		double error = 1.0e-9;
+
+		//defining variables for equation
+		double ke{0}, kw{0}, ks{0}, kn{0};
+		double de{0}, dw{0}, ds{0}, dn{0};
+		double ae{0}, aw{0}, as{0}, an{0};
+		double a0{0}, ap{0}, b{0}, vol{0};
+		double sae{0}, saw{0}, san{0}, sas{0};
+
+		int M = s.getM();
+		int N = s.getN();
+		//variables required for loop
+		int iter{0}, iflag = 1;
+
+		while (iflag == 1)
+		{
+			//update properties if are dependent on temperature. Currently it is not
+
+			for (int j = 1; j < M + 1; j++)
+			{
+				//START marching in x
+				for (int i = 1; i < N + 1; i++)
+				{
+					if (!s.getType())
+					{
+						sae = s.getDy(j);
+						saw = sae;
+					}
+					if (s.getType())
+					{
+						sae = s.getDy(j) * (y[j] + y[j + 1]) / 2.0;
+						saw = sae;
+					}
+					ke = s.getTk(j,i) * s.getTk(j,i+1) * (s.getDx(i) + dx[i + 1]) / (s.getDx(i) * s.getTk(j,i+1) + dx[i + 1] * s.getTk(j,i));
+					de = 2.0 * ke * sae / (s.getDx(i) + dx[i + 1]);
+					ae = de;
+					kw = s.getTk(j,i) * s.getTk(j,i-1) * (s.getDx(i) + dx[i - 1]) / (s.getDx(i) * s.getTk(j,i-1) + dx[i - 1] * s.getTk(j,i));
+					dw = 2.0 * kw * saw / (s.getDx(i) + dx[i - 1]);
+					aw = dw;
+					if (!s.getType())
+					{
+						san = s.getDx(i);
+						sas = san;
+					}
+					if (s.getType())
+					{
+						san = s.getDx(i) * y[j + 1];
+						sas = s.getDx(i) * y[j];
+					}
+
+					kn = s.getTk(j,i) * tk[j + 1][i] * (s.getDy(j) + dy[j + 1]) / (s.getDy(j) * tk[j + 1][i] + dy[j + 1] * s.getTk(j,i));
+					dn = 2.0 * kn * san / (s.getDy(j) + dy[j + 1]);
+					an = dn;
+					ks = s.getTk(j,i) * tk[j - 1][i] * (s.getDy(j) + dy[j - 1]) / (s.getDy(j) * tk[j - 1][i] + dy[j - 1] * s.getTk(j,i));
+					ds = 2.0 * ks * sas / (s.getDy(j) + dy[j - 1]);
+					as = ds;
+					if (!s.getType())
+					{
+						vol = s.getDx(i) * s.getDy(j);
+					}
+					if (s.getType())
+					{
+						vol = s.getDx(i) * s.getDy(j) * (y[j] + y[j + 1]) / 2.0;
+					}
+					a0 = rho[j][i] * cp[j][i] * vol / dt; // =0 for steady state
+					ap = ae + aw + an + as + a0 - sp[j][i] * vol;
+					b = sc[j][i] * vol + a0 * te0[j][i];
+					ta[i] = ap / re;
+					tb[i] = ae;
+					tc[i] = aw;
+					td[i] = b + ap / re * (1 - re) * te[j][i] + an * te[j + 1][i] + as * te[j - 1][i];
+					if (i == 1)
+						td[i] = td[i] + aw * te[j][0];
+					if (i == N)
+						td[i] = td[i] + ae * te[j][N + 1];
+				} //marching in x ends here
+				//END marching in x
+				//solve in x direction using tdma
+				tdma(j);
+
+			} //marching in y ends here
+			//END marching in y
+			//solve ----------------------------------------------------------------------------------
+			//start convergence checking ---------------------
+			iflag = checkConvergence(error);
+			if (iflag == 1)
+				iter++;
+			if (iflag == 0)
+				cout << "  Solution Converged for one time step. dt = " << dt << " in " << iter << " iterations" << endl;
+			//end convergence checking ***********************
+
+			if (iter > maxiter)
+			{
+				cout << " Iterations need to be inreased. Error in Temp is " << maxErr * 100 << " %" << endl;
+				break;
+			}
+
+		} //end of inner while loop checking iflag
+		//......................Inner Loop ........................................
+
+		for (int i = 0; i < N + 2; i++)
+		{
+			for (int j = 0; j < M + 2; j++)
+			{
+				te0[j][i] = te[j][i];
+				tep[j][i] = te0[j][i];
+			}
+		}
+
+		Shell::print2dVector(te);
+
+		//end of while loop checking t<simTime
+		//--------------------Outer Loop ---------------------------------------------
+	}
+		
