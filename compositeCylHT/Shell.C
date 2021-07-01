@@ -54,6 +54,27 @@ void Shell::setGeometry(double length, double width, bool cylindrical, double in
 	if (!cylindrical)
 		ri = -1;
 }
+void Shell::setLength(double length){
+	if (length <= 0){
+		cout << "Length shall be realistic" << endl;
+		exit(1);
+	}
+	Length = length;
+}
+void Shell::setWidth(double width){
+	if (width <= 0){
+		cout << "Width shall be realistic" << endl;
+		exit(1);
+	}
+	Width = width;
+}
+void Shell::setInnerRadius(double innerRadius){
+	if (innerRadius <= 0){
+		cout << "InnerRadius value shall be realistic" << endl;
+		exit(1);
+	}
+	ri = innerRadius;
+}
 void Shell::setMaterialProperties(double Thermal_cond, double Cp, double Density)
 {
 	tCond = Thermal_cond;
@@ -162,6 +183,8 @@ double Shell::getInnerRadius()
 	}
 	return ri;
 }
+double Shell::getTimeStep() { return dt; }
+double Shell::getSimulationTime() { return simTime; }
 
 //Transient solver
 void Shell::solveTransient(double simulationTime, double delt){
@@ -677,17 +700,25 @@ void connectShells(Shell &s1, Shell &s2, double gap, double interfaceResistance)
 	s2.setConnected();
 }
 void solveSystem(vector<vector<Shell>> &v){
+	//width for horizontal, length for vertical connection
+	//Ri for axi
 	int rows = v.size();
 	int cols = v[0].size();
 	int shellNo{0};
-	cout<<"rows = "<<rows<<endl;
-	cout<<"cols = "<<cols<<endl;
+	double dy = v[0][0].getWidth()/M;
+	double dx = v[0][0].getLength()/N;
 	
 	//Display the details
 	for (int i = 0; i < v.size(); i++){
         for (int j = 0; j < v[i].size(); j++){
 			shellNo++;
 			cout<<"Shell No : "<<shellNo<<endl;
+			v[i][j].setSimulationTime(v[0][0].getSimulationTime());
+			v[i][j].setTimeStep(v[0][0].getTimeStep());
+			if (j>0) {v[i][j].setWidth(v[i][0].getWidth()); }
+			if (i>0) {v[i][j].setLength(v[0][j].getLength());}
+
+
 			v[i][j].printDetail();
 			v[i][j].preprocessShell();
         }   
@@ -695,19 +726,23 @@ void solveSystem(vector<vector<Shell>> &v){
 	shellNo=0;
     for (int i = 0; i < v.size(); i++){
         for (int j = 0; j < v[i].size(); j++){
-			shellNo++;
-			cout<<"shellNo:"<<shellNo<<endl;
-			//if (j<(v[i].size()-1)) {v[i][j].setConstantHeatfluxBC("Right",0); cout<<"BC changed for "<<shellNo<<endl;}
-			//if (i<v.size()-1) v[i][j].setConstantHeatfluxBC("Bottom",0);
+			//setting the connection bc
+			if (j<(v[i].size()-1)) {v[i][j].setConstantHeatfluxBC("Right",0);}
+			if (j>0) {v[i][j].setConstantHeatfluxBC("Left",0);}
+			if (i<v.size()-1) v[i][j].setConstantHeatfluxBC("Bottom",0);
+			if (i>0) {v[i][j].setConstantHeatfluxBC("Top",0);}
+
+
         }   
     }
 	shellNo=0;
 	for (int i = 0; i < v.size(); i++){
         for (int j = 0; j < v[i].size(); j++){
 			shellNo++;
-			cout<<"Shell No : "<<shellNo<<endl;
+			cout<<shellNo<<endl;
 			v[i][j].printDetail();
-        }   
+        }  
+		cout<<endl; 
     }
 
 
