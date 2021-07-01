@@ -168,7 +168,10 @@ void Shell::setConvectionBC(string boundary, double Tinf, double h)
 void Shell::setInitialTemp(double initialTemp){
 	initTemp = initialTemp;
 }
-
+void Shell::setTe(int j, int i, double val){
+	if (val<0){cout<<"A negative value cannot be set to temperature: setTe method"<<endl;exit(1);}
+	te[j][i] = val;
+}
 //getters
 bool Shell::isConnected() { return connected; }
 bool Shell::getType() { return axi; }
@@ -185,6 +188,10 @@ double Shell::getInnerRadius()
 }
 double Shell::getTimeStep() { return dt; }
 double Shell::getSimulationTime() { return simTime; }
+double Shell::getTe(int j, int i){return te[j][i];}
+double Shell::getTk(int j, int i){return tk[j][i];}
+int Shell::getM(){return M;}
+int Shell::getN(){return N;}
 
 //Transient solver
 void Shell::solveTransient(double simulationTime, double delt){
@@ -705,8 +712,7 @@ void solveSystem(vector<vector<Shell>> &v){
 	int rows = v.size();
 	int cols = v[0].size();
 	int shellNo{0};
-	double dy = v[0][0].getWidth()/M;
-	double dx = v[0][0].getLength()/N;
+
 	
 	//Display the details
 	for (int i = 0; i < v.size(); i++){
@@ -724,10 +730,29 @@ void solveSystem(vector<vector<Shell>> &v){
         }   
     }
 	shellNo=0;
+
     for (int i = 0; i < v.size(); i++){
         for (int j = 0; j < v[i].size(); j++){
 			//setting the connection bc
-			if (j<(v[i].size()-1)) {v[i][j].setConstantHeatfluxBC("Right",0);}
+			int M = v[i][j].getM();
+			int N = v[i][j].getN();
+			if (j<(v[i].size()-1)) {
+
+				v[i][j].setConstantHeatfluxBC("Right",0);
+				for (int jj = 0; jj < M + 2; jj++){
+					double T1 = v[i][j].getTe(jj,N);
+					double T2 = v[i][j+1].getTe(jj,1);//left of right shell
+					double dx1 = v[i][j].getLength()/N;
+					double dx2 = v[i][j+1].getLength()/v[i][j+1].getN();
+					double dy  = v[i][j].getWidth()/M;
+					double k1 = v[i][j].getTk(jj,N);
+					double k2 = v[i][j+1].getTk(jj,1);
+					double Rc = 0;
+					double q = (T2 -T1)/(dy * (Rc + 0.5 * (dx1/k1 + dx2/k2) ));
+					v[i][j].setTe(jj, N+1 , v[i][j].getTe(jj,N) + 0.5 * dx1 * q / v[i][j].getTk(jj,N)); 
+					v[i][j+1].setTe(jj, 0 , v[i][j+1].getTe(jj,1) - 0.5 * dx2 * q / v[i][j+1].getTk(jj,1));
+				}
+			}
 			if (j>0) {v[i][j].setConstantHeatfluxBC("Left",0);}
 			if (i<v.size()-1) v[i][j].setConstantHeatfluxBC("Bottom",0);
 			if (i>0) {v[i][j].setConstantHeatfluxBC("Top",0);}

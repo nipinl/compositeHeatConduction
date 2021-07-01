@@ -61,15 +61,21 @@ class Shell{
         void setConstantTempBC(string boundary= "Left", double Temp = 300);
         void setConstantHeatfluxBC(string boundary= "Bottom", double q = 0);
         void setConvectionBC(string boundary= "Top", double Tinf=300, double h = 10);
+        void setTe(int j, int i, double val);
                 
         //getters
         bool isConnected();//checks if shell is connected to other.
+        int getM();
+        int getN();
         bool getType();
         double getLength();
         double getWidth();
         double getInnerRadius();
         double getSimulationTime();
         double getTimeStep();
+        double getTk(int j, int i);
+        double getTe(int j, int i);
+        
 
         //Transient solver
         void solveTransient(double simulationTime = 20, double delt = 0.1);
