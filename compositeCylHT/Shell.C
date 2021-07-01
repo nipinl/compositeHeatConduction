@@ -174,6 +174,12 @@ void Shell::solveTransient(double simulationTime, double delt){
 		t=t+dt;//increment time step
 	}
 }
+//Steady solver
+void Shell::solveSteady(int maxIter){
+	maxiter = maxIter;
+	solveTransient(1,1e15);
+}
+	
 	//preprocessors 
 	void Shell::preprocessShell(){
 		if (!dx.empty()) {cout<<"This Shell looks to be solved"<<endl;exit(1);}
@@ -529,10 +535,6 @@ void Shell::solveTransient(double simulationTime, double delt){
 			return iflag;
 		}
 
-void Shell::solveSteady(int maxIter){
-	maxiter = maxIter;
-	solveTransient(1,1e15);
-}
 	
 //printers
 void Shell::print2dVector(vector<vector<double>> const &v)
@@ -549,6 +551,7 @@ void Shell::print2dVector(vector<vector<double>> const &v)
 }
 void Shell::printDetail()
 {
+	cout<<"-----------------------------------------------"<<endl;
 	if (axi)
 		cout << "Cylindrical shell" << endl;
 	if (!axi)
@@ -561,13 +564,12 @@ void Shell::printDetail()
 		cout << "Shell Width(m) :" << Width << endl;
 	if (axi)
 		cout << "Shell Thickness(m) :" << Width << endl;
-	cout << "Material properties" << endl;
-	cout << "-----------------------------------" << endl;
+	cout << "Material properties  :" << endl<<endl;
 	cout << "Thermal Conductivity :" << tCond << endl;
 	cout << "Specific Heat :" << spHeat << endl;
-	cout << "Density :" << density << endl
-		 << endl;
+	cout << "Density :" << density << endl;
 
+	cout << "MSimulation details  :" << endl<<endl;
 	cout << "Simulation time(s) :" << simTime << endl;
 	cout << "Number of divisions along y :" << M << endl;
 	cout << "Number of divisions along x :" << N << endl;
@@ -637,6 +639,7 @@ void Shell::printDetail()
 	cout << "Maximum iteration :" << maxiter << endl;
 	cout << "Relaxation coefficient :" << re << endl;
 	cout << "Time step(s) :" << dt << endl;
+	cout<<"-----------------------------------------------"<<endl;
 }
 
 //non member function methods
@@ -672,4 +675,35 @@ void connectShells(Shell &s1, Shell &s2, double gap, double interfaceResistance)
 
 	s1.setConnected();
 	s2.setConnected();
+}
+void solveSystem(vector<vector<Shell>> const &v){
+	int rows = v.size();
+	int cols = v[0].size();
+	int shellNo{0};
+	cout<<"rows = "<<rows<<endl;
+	cout<<"cols = "<<cols<<endl;
+	//Display the details
+	for (auto i : v){
+		shellNo++;
+		for (auto shell : i){
+			cout<<"Shell No : "<<shellNo<<endl;
+			shell.printDetail();
+		}
+	}
+    for (int i = 0; i < v.size(); i++)
+    {
+        for (int j = 0; j < v[i].size(); j++)
+        {
+			//v[i][j].preprocessShell();
+			//v[i][j].setConstantHeatfluxBC("Right",0);
+        }   
+    }
+
+	for (auto i : v){
+		for (auto shell : i){
+			shell.preprocessShell();
+			shell.setConstantHeatfluxBC("Right",0);
+		}
+	}
+
 }

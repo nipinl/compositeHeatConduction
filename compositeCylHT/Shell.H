@@ -66,19 +66,25 @@ class Shell{
         double getWidth();
         double getInnerRadius();
 
+        //Transient solver
+        void solveTransient(double simulationTime = 20, double delt = 0.1);
+        //Steady solver
+        void solveSteady(int maxIter=1000);
+        
+       
         //preprocessors
         void preprocessShell();
             void populateNodes();
             void populateMaterialProperties();
             void initialiseField();
 
-        //solvers
+        //sub-solver methods
+
         void advanceOneTimeStep();
         void applyBoundaryConditions();
         void tdma(int);
         int checkConvergence(double);
-        void solveTransient(double simulationTime = 20, double delt = 0.1);
-        void solveSteady(int maxIter=1000);
+        
 
 
         //printers
@@ -87,5 +93,7 @@ class Shell{
 };
 
 void connectShells(Shell& s1,Shell& s2, double gap=0.01, double interfaceResistance=0);//assume outer(top) of first is connected to inner(bottom) of second
+
+void solveSystem(vector<vector<Shell>> const &v);
 
 #endif
