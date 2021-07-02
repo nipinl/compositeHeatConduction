@@ -21,16 +21,18 @@ int main()
     }
 
 	//s1.setGeometry(0.5,0.05,true,0.15);
+	s1.setLength(2*s1.getLength());//doubling length
 	s1.printDetail();
 	//s1.solveTransient();
 	//s2.solveSteady();
+	s3.setInitialTemp(500);
 	vector<vector<Shell>> s
     {
-        {s2}
+        {s2,s3}
     };
-	//solveSystem(s);
-	s2.solveTransient();
-	s2.printDetail();
+	solveSystem(s);
+	//s2.solveTransient();
+	//s2.printDetail();
     	
 	return 0;
 }

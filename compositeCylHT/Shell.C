@@ -17,7 +17,7 @@ Shell::Shell() : axi(true),		   //axisymmetric, i.e., for tube
 				 hfL(10), hfR(10), hfB(10), hfT(50),
 				 maxiter(1000),
 				 re(1),
-				 simTime(0.15),
+				 simTime(20),
 				 dt(0.1)
 {}
 
@@ -168,16 +168,16 @@ void Shell::setInitialTemp(double initialTemp){
 	initTemp = initialTemp;
 }
 void Shell::setTe(int j, int i, double val){
-	if (val<0){cout<<"A negative value cannot be set to temperature: setTe method"<<endl;exit(1);}
+	//if (val<0){cout<<"A negative value cannot be set to temperature: setTe method"<<endl;exit(1);}
 	te[j][i] = val;
 }
 void Shell::setTe0(int j, int i, double val){
-	if (val<0){cout<<"A negative value cannot be set to temperature: setTe0 method"<<endl;exit(1);}
+	//if (val<0){cout<<"A negative value cannot be set to temperature: setTe0 method"<<endl;exit(1);}
 	te0[j][i] = val;
 }
 void Shell::setTep(int j, int i, double val)
 {
-	if (val<0){cout<<"A negative value cannot be set to temperature: setTep method"<<endl;exit(1);}
+	//if (val<0){cout<<"A negative value cannot be set to temperature: setTep method"<<endl;exit(1);}
 	tep[j][i] = val;
 }
 void Shell::setSp(int j, int i, double val){sp[j][i] = val;}
@@ -327,7 +327,7 @@ void Shell::solveSteady(int maxIter){
 	}
 
 	//sub-solver methods
-	void ::Shell::advanceOneTimeStep()
+	void Shell::advanceOneTimeStep()
 	{
 		//for convergence checking
 		double maxErr = 1e-10;
@@ -423,6 +423,7 @@ void Shell::solveSteady(int maxIter){
 				} //marching in x ends here
 				//END marching in x
 				//solve in x direction using tdma
+				
 				tdma(j);
 
 			} //marching in y ends here
@@ -542,7 +543,10 @@ void Shell::solveSteady(int maxIter){
 		}
 		void Shell::tdma(int j)
 		{ //calls inside advanceOneTimeStep
-
+			print1dVector(ta);
+			print1dVector(tb);
+			print1dVector(tc);
+			print1dVector(td);
 			//print1dVector(ta);		
 			double alpha[N + 2]{0}, beta[N + 2]{0}, dum[N + 2]{0};
 			for (int i = 0; i < N + 2; i++)
@@ -773,10 +777,10 @@ void solveSystem(vector<vector<Shell>> &v){
 
 			v[i][j].printDetail();
 			v[i][j].preprocessShell();
+			v[i][j].applyBoundaryConditions();
         }   
     }
 	shellNo=0;
-
 	setConnectionBC(v);
     
 	while(t<simTime)
@@ -801,6 +805,7 @@ void solveSystem(vector<vector<Shell>> &v){
 			cout<<shellNo<<endl;
 			
 			v[i][j].printTe();
+			v[i][j].printDetail();
         }  
 		cout<<endl; 
     }
@@ -826,7 +831,8 @@ void setConnectionBC(vector<vector<Shell>> &v){
 					double k1 = v[i][j].getTk(jj,N1);
 					double k2 = v[i][j+1].getTk(jj,1);
 					double Rc = 0;
-					double q = (T2 -T1)/(dy * (Rc + 0.5 * (dx1/k1 + dx2/k2) ));
+					double q = (T2 -T1)/(dy * Rc + 0.5 * (dx1/k1 + dx2/k2) );
+					cout<<"q = "<<jj<<" - "<<q<<endl;
 					v[i][j].setTe(jj, N1+1 , v[i][j].getTe(jj,N1) + 0.5 * dx1 * q / v[i][j].getTk(jj,N1)); 
 					v[i][j+1].setTe(jj, 0 , v[i][j+1].getTe(jj,1) - 0.5 * dx2 * q / v[i][j+1].getTk(jj,1));		
 				}
@@ -843,7 +849,7 @@ void setConnectionBC(vector<vector<Shell>> &v){
 					double k1 = v[i][j].getTk(1,ii);
 					double k2 = v[i+1][j].getTk(M2,ii);
 					double Rc = 0;
-					double q = (T2 -T1)/(dx * (Rc + 0.5 * (dy1/k1 + dy2/k2) ));
+					double q = (T2 -T1)/(dx * Rc + 0.5 * (dy1/k1 + dy2/k2) );
 					v[i][j].setTe(0, ii , v[i][j].getTe(1,ii) + 0.5 * dy1 * q / v[i][j].getTk(1,ii)); 
 					v[i+1][j].setTe(M2+1, ii , v[i+1][j].getTe(M2,ii) - 0.5 * dy2 * q / v[i+1][j].getTk(M2,ii));
 				}			
@@ -970,7 +976,7 @@ void advanceOneTimeStep(Shell &s)
 				} //marching in x ends here
 				//END marching in x
 				//solve in x direction using tdma
-				print1dVector(ta);
+				
 				tdma(s, j, N, ta, tb, tc, td);
 
 			} //marching in y ends here
@@ -1006,6 +1012,11 @@ void advanceOneTimeStep(Shell &s)
 void tdma(Shell &s, int &j, int &N, vector<double> &ta, vector<double> &tb, vector<double> &tc, vector<double> &td )
 { //calls inside advanceOneTimeStep
 	double alpha[N + 2]{0}, beta[N + 2]{0}, dum[N + 2]{0};
+	print1dVector(ta);
+	print1dVector(tb);
+	print1dVector(tc);
+	print1dVector(td);
+
 	for (int i = 0; i < N + 2; i++)
 	{
 		alpha[i] = 1;
