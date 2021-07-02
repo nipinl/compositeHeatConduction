@@ -92,7 +92,7 @@ class Shell{
         
 
         //Transient solver
-        void solveTransient(double simulationTime = 20, double delt = 0.1);
+        void solveTransient();
         //Steady solver
         void solveSteady(int maxIter=1000);
         

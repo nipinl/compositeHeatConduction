@@ -17,10 +17,9 @@ Shell::Shell() : axi(true),		   //axisymmetric, i.e., for tube
 				 hfL(10), hfR(10), hfB(10), hfT(50),
 				 maxiter(1000),
 				 re(1),
-				 simTime(20),
+				 simTime(0.15),
 				 dt(0.1)
-{
-}
+{}
 
 //setters
 void Shell::setConnected() { connected = true; }
@@ -235,9 +234,7 @@ int Shell::getM(){return M;}
 int Shell::getN(){return N;}
 
 //Transient solver
-void Shell::solveTransient(double simulationTime, double delt){
-	setSimulationTime(simulationTime);
-	setTimeStep(delt);
+void Shell::solveTransient(){
 	preprocessShell();
 	double t{0};
 	while(t<simTime){
@@ -248,7 +245,8 @@ void Shell::solveTransient(double simulationTime, double delt){
 //Steady solver
 void Shell::solveSteady(int maxIter){
 	maxiter = maxIter;
-	solveTransient(1,1e15);
+	setTimeStep(1e5);
+	solveTransient();
 }
 	
 	//preprocessors 
@@ -544,6 +542,8 @@ void Shell::solveSteady(int maxIter){
 		}
 		void Shell::tdma(int j)
 		{ //calls inside advanceOneTimeStep
+
+			//print1dVector(ta);		
 			double alpha[N + 2]{0}, beta[N + 2]{0}, dum[N + 2]{0};
 			for (int i = 0; i < N + 2; i++)
 			{
@@ -570,6 +570,7 @@ void Shell::solveSteady(int maxIter){
 			for (int i = 1; i < N + 1; i++)
 			{
 				te[j][i] = dum[i];
+				//cout<<"dum["<<i<<"] = "<<dum[i]<<endl;
 			}
 		}
 		int Shell::checkConvergence(double error)
@@ -1001,8 +1002,6 @@ void advanceOneTimeStep(Shell &s)
 		}
 	}
 	
-
-
 
 void tdma(Shell &s, int &j, int &N, vector<double> &ta, vector<double> &tb, vector<double> &tc, vector<double> &td )
 { //calls inside advanceOneTimeStep
