@@ -172,6 +172,19 @@ void Shell::setTe(int j, int i, double val){
 	if (val<0){cout<<"A negative value cannot be set to temperature: setTe method"<<endl;exit(1);}
 	te[j][i] = val;
 }
+void Shell::setTe0(int j, int i, double val){
+	if (val<0){cout<<"A negative value cannot be set to temperature: setTe0 method"<<endl;exit(1);}
+	te0[j][i] = val;
+}
+void Shell::setTep(int j, int i, double val)
+{
+	if (val<0){cout<<"A negative value cannot be set to temperature: setTep method"<<endl;exit(1);}
+	tep[j][i] = val;
+}
+void Shell::setSp(int j, int i, double val){sp[j][i] = val;}
+void Shell::setSc(int j, int i, double val){sc[j][i] = val;}
+
+
 //getters
 bool Shell::isConnected() { return connected; }
 bool Shell::getType() { return axi; }
@@ -190,6 +203,34 @@ double Shell::getTimeStep() { return dt; }
 double Shell::getSimulationTime() { return simTime; }
 double Shell::getTe(int j, int i){return te[j][i];}
 double Shell::getTk(int j, int i){return tk[j][i];}
+double Shell::getRho(int j, int i){return rho[j][i];}
+double Shell::getCp(int j, int i){return cp[j][i];}
+double Shell::getSp(int j, int i){return sp[j][i];}
+double Shell::getSc(int j, int i){return sc[j][i];}
+double Shell::getTe0(int j, int i){return te0[j][i];}
+double Shell::getY(int j){
+	if (j<0) {
+		cout<<"Negative index in getY";
+		exit(1);
+	}
+return y[j];
+}
+double Shell::getDy(int j){
+	if (j<0) {
+		cout<<"Negative index in getDy";
+		exit(1);
+	}
+return dy[j];
+}
+double Shell::getDx(int i){
+	if (i<0) {
+		cout<<"Negative index in getDx";
+		exit(1);
+	}
+return dx[i];
+}
+int Shell::getMaxIter(){return maxiter;}
+double Shell::getRelaxationCoeff(){return re;}
 int Shell::getM(){return M;}
 int Shell::getN(){return N;}
 
@@ -415,7 +456,7 @@ void Shell::solveSteady(int maxIter){
 			}
 		}
 
-		Shell::print2dVector(te);
+		printTe();
 
 		//end of while loop checking t<simTime
 		//--------------------Outer Loop ---------------------------------------------
@@ -566,18 +607,6 @@ void Shell::solveSteady(int maxIter){
 
 	
 //printers
-void Shell::print2dVector(vector<vector<double>> const &v)
-{
-	for (auto i : v)
-	{
-		//i is now an 1D vector
-		for (auto j : i)
-		{
-			cout << j << " ";
-		}
-		cout << endl;
-	}
-}
 void Shell::printDetail()
 {
 	cout<<"-----------------------------------------------"<<endl;
@@ -669,6 +698,18 @@ void Shell::printDetail()
 	cout << "Relaxation coefficient :" << re << endl;
 	cout << "Time step(s) :" << dt << endl;
 	cout<<"-----------------------------------------------"<<endl;
+}
+void Shell::printTe()
+{
+	for (auto i : te)
+	{
+		//i is now an 1D vector
+		for (auto j : i)
+		{
+			cout << j << " ";
+		}
+		cout << endl;
+	}
 }
 
 //non member function methods
@@ -792,8 +833,12 @@ void setConnectionBC(vector<vector<Shell>> &v){
     }
 
 }
+
+
 void advanceOneTimeStep(Shell &s)
-	{
+{
+	int M = s.getM();
+	int N = s.getN();
 		//for convergence checking
 		double maxErr = 1e-10;
 		double error = 1.0e-9;
@@ -805,109 +850,179 @@ void advanceOneTimeStep(Shell &s)
 		double a0{0}, ap{0}, b{0}, vol{0};
 		double sae{0}, saw{0}, san{0}, sas{0};
 
-		int M = s.getM();
-		int N = s.getN();
+		//for  tdma
+		vector<double> ta, tb, tc, td;
+		for (int i = 0; i < N + 1; i++)
+		{
+			ta.push_back(0);
+			tb.push_back(0);
+			tc.push_back(0);
+			td.push_back(0);
+		}
 		//variables required for loop
 		int iter{0}, iflag = 1;
 
+		bool axi=s.getType();
+		double re = s.getRelaxationCoeff();
 		while (iflag == 1)
 		{
-			//update properties if are dependent on temperature. Currently it is not
+			//add source terms if any. Now nothing
+			for (int j = 0; j < M + 2; j++)
+			{
+				for (int i = 0; i < N + 2; i++){
+					s.setSp(j,i,0);
+					s.setSc(j,i,0);
+				}
+			}
 
+			//START marching in y
 			for (int j = 1; j < M + 1; j++)
 			{
+				double Yj = s.getY(j); 
+				double Yjp1 = s.getY(j+1);
+				double dyj = s.getDy(j); 
+				double dyjp1 = s.getDy(j+1);
+				double dyjm1 = s.getDy(j-1);
 				//START marching in x
 				for (int i = 1; i < N + 1; i++)
 				{
-					if (!s.getType())
+					double dxi = s.getDx(i);
+					double dxip1 = s.getDx(i+1);
+					double dxim1 = s.getDx(i-1);
+					double Tkji = s.getTk(j,i);
+					double Tkjip1 = s.getTk(j,i+1);
+					double Tkjim1 = s.getTk(j,i-1);
+					double Tkjp1i = s.getTk(j+1,i);
+					double Tkjm1i = s.getTk(j-1,i);
+					
+					if (!axi)
 					{
-						sae = s.getDy(j);
+						sae = dyj;
 						saw = sae;
 					}
-					if (s.getType())
+					if (axi)
 					{
-						sae = s.getDy(j) * (y[j] + y[j + 1]) / 2.0;
+						sae = dyj * (Yj + Yjp1) / 2.0;
 						saw = sae;
 					}
-					ke = s.getTk(j,i) * s.getTk(j,i+1) * (s.getDx(i) + dx[i + 1]) / (s.getDx(i) * s.getTk(j,i+1) + dx[i + 1] * s.getTk(j,i));
-					de = 2.0 * ke * sae / (s.getDx(i) + dx[i + 1]);
+					ke = Tkji * Tkjip1 * (dxi + dxip1) / (dxi * Tkjip1 + dxip1 * Tkji);
+					de = 2.0 * ke * sae / (dxi + dxip1);
 					ae = de;
-					kw = s.getTk(j,i) * s.getTk(j,i-1) * (s.getDx(i) + dx[i - 1]) / (s.getDx(i) * s.getTk(j,i-1) + dx[i - 1] * s.getTk(j,i));
-					dw = 2.0 * kw * saw / (s.getDx(i) + dx[i - 1]);
+					kw = Tkji * Tkjim1 * (dxi + dxim1) / (dxi * Tkjim1 + dxim1 * Tkji);
+					dw = 2.0 * kw * saw / (dxi + dxim1);
 					aw = dw;
-					if (!s.getType())
+					if (!axi)
 					{
-						san = s.getDx(i);
+						san = dxi;
 						sas = san;
 					}
-					if (s.getType())
+					if (axi)
 					{
-						san = s.getDx(i) * y[j + 1];
-						sas = s.getDx(i) * y[j];
+						san = dxi * Yjp1;
+						sas = dxi * Yj;
 					}
 
-					kn = s.getTk(j,i) * tk[j + 1][i] * (s.getDy(j) + dy[j + 1]) / (s.getDy(j) * tk[j + 1][i] + dy[j + 1] * s.getTk(j,i));
-					dn = 2.0 * kn * san / (s.getDy(j) + dy[j + 1]);
+					kn = Tkji * Tkjp1i * (dyj + dyjp1) / (dyj * Tkjp1i + dyjp1 * Tkji);
+					dn = 2.0 * kn * san / (dyj + dyjp1);
 					an = dn;
-					ks = s.getTk(j,i) * tk[j - 1][i] * (s.getDy(j) + dy[j - 1]) / (s.getDy(j) * tk[j - 1][i] + dy[j - 1] * s.getTk(j,i));
-					ds = 2.0 * ks * sas / (s.getDy(j) + dy[j - 1]);
+					ks = Tkji * Tkjm1i * (dyj + dyjm1) / (dyj * Tkjm1i + dyjm1 * Tkji);
+					ds = 2.0 * ks * sas / (dyj + dyjm1);
 					as = ds;
-					if (!s.getType())
+					if (!axi)
 					{
-						vol = s.getDx(i) * s.getDy(j);
+						vol = dxi * dyj;
 					}
-					if (s.getType())
+					if (axi)
 					{
-						vol = s.getDx(i) * s.getDy(j) * (y[j] + y[j + 1]) / 2.0;
+						vol = dxi * dyj * (Yj + Yjp1) / 2.0;
 					}
-					a0 = rho[j][i] * cp[j][i] * vol / dt; // =0 for steady state
-					ap = ae + aw + an + as + a0 - sp[j][i] * vol;
-					b = sc[j][i] * vol + a0 * te0[j][i];
+					a0 = s.getRho(j,i) * s.getCp(j,i) * vol / s.getTimeStep(); // =0 for steady state
+					ap = ae + aw + an + as + a0 - s.getSp(j,i) * vol;
+					b = s.getSc(j,i) * vol + a0 * s.getTe0(j,i);
 					ta[i] = ap / re;
 					tb[i] = ae;
 					tc[i] = aw;
-					td[i] = b + ap / re * (1 - re) * te[j][i] + an * te[j + 1][i] + as * te[j - 1][i];
+					td[i] = b + ap / re * (1 - re) * s.getTe(j,i) + an * s.getTe(j+1,i) + as * s.getTe(j-1,i);
 					if (i == 1)
-						td[i] = td[i] + aw * te[j][0];
+						td[i] = td[i] + aw * s.getTe(j,0);
 					if (i == N)
-						td[i] = td[i] + ae * te[j][N + 1];
+						td[i] = td[i] + ae * s.getTe(j,N+1);
 				} //marching in x ends here
 				//END marching in x
 				//solve in x direction using tdma
-				tdma(j);
+				tdma(s, j, N, ta, tb, tc, td);
 
 			} //marching in y ends here
 			//END marching in y
 			//solve ----------------------------------------------------------------------------------
 			//start convergence checking ---------------------
-			iflag = checkConvergence(error);
+			iflag = s.checkConvergence(error);
 			if (iflag == 1)
 				iter++;
 			if (iflag == 0)
-				cout << "  Solution Converged for one time step. dt = " << dt << " in " << iter << " iterations" << endl;
+				cout << "  Solution Converged for one time step. dt = " << s.getTimeStep() << " in " << iter << " iterations" << endl;
 			//end convergence checking ***********************
 
-			if (iter > maxiter)
+			if (iter > s.getMaxIter())
 			{
 				cout << " Iterations need to be inreased. Error in Temp is " << maxErr * 100 << " %" << endl;
 				break;
 			}
 
 		} //end of inner while loop checking iflag
-		//......................Inner Loop ........................................
 
 		for (int i = 0; i < N + 2; i++)
 		{
 			for (int j = 0; j < M + 2; j++)
 			{
-				te0[j][i] = te[j][i];
-				tep[j][i] = te0[j][i];
+				s.setTe0(j,i, s.getTe(j,i));//te0[j][i] = te[j][i];
+				s.setTep(j,i, s.getTe(j,i));//tep[j][i] = te0[j][i];
 			}
 		}
-
-		Shell::print2dVector(te);
-
-		//end of while loop checking t<simTime
-		//--------------------Outer Loop ---------------------------------------------
 	}
-		
+	
+
+
+
+void tdma(Shell &s, int &j, int &N, vector<double> &ta, vector<double> &tb, vector<double> &tc, vector<double> &td )
+{ //calls inside advanceOneTimeStep
+	double alpha[N + 2]{0}, beta[N + 2]{0}, dum[N + 2]{0};
+	for (int i = 0; i < N + 2; i++)
+	{
+		alpha[i] = 1;
+		beta[i] = 1;
+		dum[i] = 1;
+	}
+	beta[1] = tb[1] / ta[1];
+	alpha[1] = td[1] / ta[1];
+	//forward substitution
+	for (int ii = 2; ii < N + 1; ii++)
+	{
+		beta[ii] = tb[ii] / (ta[ii] - tc[ii] * beta[ii - 1]);
+		alpha[ii] = (td[ii] + tc[ii] * alpha[ii - 1]) / (ta[ii] - tc[ii] * beta[ii - 1]);
+	}
+	//backward substitution
+	dum[N] = alpha[N];
+	for (int jj = 0; jj < N - 1; jj++)
+	{
+		int ii = N - 1 - jj;
+		dum[ii] = beta[ii] * dum[ii + 1] + alpha[ii];
+	}
+	//solved value
+	for (int i = 1; i < N + 1; i++)
+	{
+		s.setTe(j,i,dum[i]);
+	}
+}	
+void print2dVector(vector<vector<double>> const &v)
+{
+	for (auto i : v)
+	{
+		//i is now an 1D vector
+		for (auto j : i)
+		{
+			cout << j << " ";
+		}
+		cout << endl;
+	}
+}

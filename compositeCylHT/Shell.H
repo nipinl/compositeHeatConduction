@@ -62,6 +62,10 @@ class Shell{
         void setConstantHeatfluxBC(string boundary= "Bottom", double q = 0);
         void setConvectionBC(string boundary= "Top", double Tinf=300, double h = 10);
         void setTe(int j, int i, double val);
+        void setTe0(int j, int i, double val);
+        void setTep(int j, int i, double val);
+        void setSp(int j, int i, double val);
+        void setSc(int j, int i, double val);
                 
         //getters
         bool isConnected();//checks if shell is connected to other.
@@ -75,6 +79,16 @@ class Shell{
         double getTimeStep();
         double getTk(int j, int i);
         double getTe(int j, int i);
+        double getTe0(int j, int i);
+        double getRho(int j, int i);
+        double getCp(int j, int i);
+        double getSp(int j, int i);
+        double getSc(int j, int i);
+        double getY(int j);
+        double getDy(int j);
+        double getDx(int j);
+        int getMaxIter();
+        double getRelaxationCoeff();
         
 
         //Transient solver
@@ -99,12 +113,15 @@ class Shell{
 
 
         //printers
-        void print2dVector(vector<vector<double>> const &v);
         void printDetail();
+        void printTe();
 };
 
 void connectShells(Shell& s1,Shell& s2, double gap=0.01, double interfaceResistance=0);//assume outer(top) of first is connected to inner(bottom) of second
-
+void tdma(Shell &s, int &j, int &N, vector<double> &ta, vector<double> &tb, vector<double> &tc, vector<double> &td );
 void solveSystem(vector<vector<Shell>> &v);
+void setConnectionBC(vector<vector<Shell>> &v);
+void print2dVector(vector<vector<double>> const &v);
+
 
 #endif

@@ -28,6 +28,9 @@
         "vector": "cpp",
         "string": "cpp",
         "string_view": "cpp",
-        "array": "cpp"
+        "array": "cpp",
+        "bitset": "cpp",
+        "initializer_list": "cpp",
+        "utility": "cpp"
     }
 }
