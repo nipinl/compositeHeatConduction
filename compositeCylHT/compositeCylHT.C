@@ -19,12 +19,17 @@ int main()
             Shells[i][j].setWidth(shellNo);
         }  
     }
-/* 
-	s1.setGeometry(0.5,0.05,true,0.15);
-	s1.printDetail();
-	s1.solveTransient();
-	s2.solveSteady(); */
-	solveSystem(Shells);
+
+	//s1.setGeometry(0.5,0.05,true,0.15);
+	//s1.printDetail();
+	//s1.solveTransient();
+	//s2.solveSteady();
+	vector<vector<Shell>> s
+    {
+        {s2}
+    };
+	solveSystem(s);
+	//s2.solveTransient();
     	
 	return 0;
 }

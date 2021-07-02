@@ -120,8 +120,10 @@ class Shell{
 void connectShells(Shell& s1,Shell& s2, double gap=0.01, double interfaceResistance=0);//assume outer(top) of first is connected to inner(bottom) of second
 void tdma(Shell &s, int &j, int &N, vector<double> &ta, vector<double> &tb, vector<double> &tc, vector<double> &td );
 void solveSystem(vector<vector<Shell>> &v);
+void advanceOneTimeStep(Shell &s);
 void setConnectionBC(vector<vector<Shell>> &v);
 void print2dVector(vector<vector<double>> const &v);
+void print1dVector(vector<double> const &v);
 
 
 #endif

@@ -582,9 +582,11 @@ void Shell::solveSteady(int maxIter){
 				for (int i = 0; i < N + 2; i++)
 				{
 					errorTe = abs(te[j][i] - tep[j][i]) / te[j][i];
+					//cout<<"errorTe = "<<errorTe;
 					if (errorTe > maxErr)
 						maxErr = errorTe;
 				}
+				//cout<<endl;
 			}
 			if (maxErr > error)
 			{
@@ -752,6 +754,9 @@ void solveSystem(vector<vector<Shell>> &v){
 	int rows = v.size();
 	int cols = v[0].size();
 	int shellNo{0};
+	double simTime = v[0][0].getSimulationTime();
+	double dt = v[0][0].getTimeStep();
+	double t=0;
 
 	
 	//Display the details
@@ -773,12 +778,28 @@ void solveSystem(vector<vector<Shell>> &v){
 
 	setConnectionBC(v);
     
+	while(t<simTime)
+	{
+		for (int i = 0; i < v.size(); i++)
+		{
+			for (int j = 0; j < v[i].size(); j++)
+			{
+				advanceOneTimeStep(v[i][j]);
+			}  
+			cout<<endl; 
+		}
+		setConnectionBC(v);
+
+		t = t+dt;
+	}
+
 	shellNo=0;
 	for (int i = 0; i < v.size(); i++){
         for (int j = 0; j < v[i].size(); j++){
 			shellNo++;
 			cout<<shellNo<<endl;
-			v[i][j].printDetail();
+			
+			v[i][j].printTe();
         }  
 		cout<<endl; 
     }
@@ -824,9 +845,7 @@ void setConnectionBC(vector<vector<Shell>> &v){
 					double q = (T2 -T1)/(dx * (Rc + 0.5 * (dy1/k1 + dy2/k2) ));
 					v[i][j].setTe(0, ii , v[i][j].getTe(1,ii) + 0.5 * dy1 * q / v[i][j].getTk(1,ii)); 
 					v[i+1][j].setTe(M2+1, ii , v[i+1][j].getTe(M2,ii) - 0.5 * dy2 * q / v[i+1][j].getTk(M2,ii));
-				}
-			
-			
+				}			
 			}
 
         }   
@@ -950,6 +969,7 @@ void advanceOneTimeStep(Shell &s)
 				} //marching in x ends here
 				//END marching in x
 				//solve in x direction using tdma
+				print1dVector(ta);
 				tdma(s, j, N, ta, tb, tc, td);
 
 			} //marching in y ends here
@@ -976,7 +996,7 @@ void advanceOneTimeStep(Shell &s)
 			for (int j = 0; j < M + 2; j++)
 			{
 				s.setTe0(j,i, s.getTe(j,i));//te0[j][i] = te[j][i];
-				s.setTep(j,i, s.getTe(j,i));//tep[j][i] = te0[j][i];
+				s.setTep(j,i, s.getTe0(j,i));//tep[j][i] = te0[j][i];
 			}
 		}
 	}
@@ -1025,4 +1045,12 @@ void print2dVector(vector<vector<double>> const &v)
 		}
 		cout << endl;
 	}
+}
+void print1dVector(vector<double> const &v)
+{
+	for (auto i : v)
+	{
+		cout << i << " ";
+	}
+	cout << endl;
 }
