@@ -2,6 +2,7 @@
 #define SHEL_H_
 #include<iostream>
 #include<vector>
+#include<math.h>
 using namespace std;
 class Shell{
     protected:
@@ -22,7 +23,7 @@ class Shell{
         double initTemp;//Initial uniform temperature of the tube
 
         //Boundary conditions
-        enum bc {constTemp, constHeatFlux, convection};
+        enum bc {constTemp, constHeatFlux, convection, ambientRadiation};
         bc lbc,rbc,bbc,tbc;
 
         // variables for bc
@@ -32,6 +33,8 @@ class Shell{
         //convection
         double TfLeft,TfRight,TfBottom,TfTop;
         double hfL,hfR,hfB,hfT;
+        //ambientRadiation
+        double eps;
 
         //variables for simulation control
         int maxiter;
@@ -61,6 +64,7 @@ class Shell{
         void setConstantTempBC(string boundary= "Left", double Temp = 300);
         void setConstantHeatfluxBC(string boundary= "Bottom", double q = 0);
         void setConvectionBC(string boundary= "Top", double Tinf=300, double h = 10);
+        void setRadiationBC(string boundary = "Top", double Tamb=300, double emissivity=0.8);
         void setTe(int j, int i, double val);
         void setTe0(int j, int i, double val);
         void setTep(int j, int i, double val);

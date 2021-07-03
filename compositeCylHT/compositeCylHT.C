@@ -26,9 +26,10 @@ int main()
 	//s1.solveTransient();
 	//s2.solveSteady();
 	s3.setInitialTemp(500);
+	s2.setRadiationBC("Top",1000);
 	vector<vector<Shell>> s
     {
-        {s2,s3}
+        {s2}
     };
 	solveSystem(s);
 	//s2.solveTransient();

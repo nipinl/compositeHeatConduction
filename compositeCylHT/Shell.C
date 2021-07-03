@@ -15,6 +15,7 @@ Shell::Shell() : axi(true),		   //axisymmetric, i.e., for tube
 				 qLeft(0), qRight(0), qBottom(100), qTop(-50),
 				 TfLeft(300), TfRight(300), TfBottom(300), TfTop(500),
 				 hfL(10), hfR(10), hfB(10), hfT(50),
+				 eps(0.8),
 				 maxiter(1000),
 				 re(1),
 				 simTime(20),
@@ -161,6 +162,34 @@ void Shell::setConvectionBC(string boundary, double Tinf, double h)
 	else
 	{
 		cout << "Wrong boundary specified in Convection boundary condition" << endl;
+		exit(1);
+	}
+}
+void Shell::setRadiationBC(string boundary, double Tamb, double emissivity)
+{
+	if (boundary == "Left")
+	{
+		lbc = ambientRadiation;
+		TLeft = Tamb, eps = emissivity;
+	}
+	else if (boundary == "Right")
+	{
+		rbc = ambientRadiation;
+		TRight = Tamb, eps = emissivity;
+	}
+	else if (boundary == "Bottom")
+	{
+		bbc = ambientRadiation;
+		TBottom = Tamb, eps = emissivity;
+	}
+	else if (boundary == "Top")
+	{
+		tbc = ambientRadiation;
+		TTop = Tamb, eps = emissivity;
+	}
+	else
+	{
+		cout << "Wrong boundary specified in ambientRadiation boundary condition" << endl;
 		exit(1);
 	}
 }
@@ -462,6 +491,7 @@ void Shell::solveSteady(int maxIter){
 	}
 		void Shell::applyBoundaryConditions(){ //calls inside advanceOneTimeStep
 			//tube inlet, which is along r(or y) direction
+			double qr = 0;
 			for (int j = 0; j < M + 2; j++)
 			{
 				switch (lbc)
@@ -475,6 +505,11 @@ void Shell::solveSteady(int maxIter){
 				case convection:
 					te[j][0] = (hfL * TfLeft + 2 * te[j][1] * tk[j][1] / dx[1]) / (hfL + 2 * tk[j][1] / dx[1]);
 					break;
+				case ambientRadiation:
+					qr = eps*5.67e-8*(pow(TLeft,4) -pow(te[j][1],4));
+					te[j][0] = te[j][1] + 0.5 * dx[1] * qr / tk[j][1]; //heat flux into the system is +ve
+					break;
+				
 				default:
 					te[j][0] = TLeft;
 					break;
@@ -494,6 +529,10 @@ void Shell::solveSteady(int maxIter){
 					break;
 				case convection:
 					te[j][N + 1] = (hfR * TfRight + 2 * te[j][N] * tk[j][N] / dx[N]) / (hfR + 2 * tk[j][N] / dx[N]);
+					break;
+				case ambientRadiation:
+					qr = eps*5.67e-8*(pow(TRight,4) -pow(te[j][N],4));
+					te[j][N + 1] = te[j][N] + 0.5 * dx[N] * qr / tk[j][N]; //heat flux into the system is +ve
 					break;
 				default:
 					te[j][0] = TRight;
@@ -515,6 +554,10 @@ void Shell::solveSteady(int maxIter){
 				case convection:
 					te[0][i] = (hfB * TfBottom + 2 * te[1][i] * tk[1][i] / dy[1]) / (hfB + 2 * tk[1][i] / dy[1]);
 					break;
+				case ambientRadiation:
+					qr = eps*5.67e-8*(pow(TBottom,4) -pow(te[1][i],4));
+					te[0][i] = te[1][i] + 0.5 * dy[1] * qr / tk[1][i]; //heat flux into the system is +ve
+					break;	
 				default:
 					te[0][i] = TBottom;
 					break;
@@ -535,6 +578,10 @@ void Shell::solveSteady(int maxIter){
 				case convection:
 					te[M + 1][i] = (hfT * TfTop + 2 * te[M][i] * tk[M][i] / dy[M]) / (hfT + 2 * tk[M][i] / dy[M]);
 					break;
+				case ambientRadiation:
+					qr = eps*5.67e-8*(pow(TTop,4) -pow(te[M][i],4));
+					te[M + 1][i] = te[M][i] + 0.5 * dy[M] * qr / tk[M][i]; //heat flux into the system is +ve
+					break;	
 				default:
 					te[M + 1][i] = TTop;
 					break;
@@ -720,7 +767,7 @@ void Shell::printTe()
 }
 
 //non member function methods
-void connectShells(Shell &s1, Shell &s2, double gap, double interfaceResistance)
+/* void connectShells(Shell &s1, Shell &s2, double gap, double interfaceResistance)
 {
 	if (s1.isConnected() || s2.isConnected())
 	{
@@ -753,7 +800,7 @@ void connectShells(Shell &s1, Shell &s2, double gap, double interfaceResistance)
 	s1.setConnected();
 	s2.setConnected();
 }
-void solveSystem(vector<vector<Shell>> &v){
+ */void solveSystem(vector<vector<Shell>> &v){
 	//width for horizontal, length for vertical connection
 	//Ri for axi
 	int rows = v.size();
