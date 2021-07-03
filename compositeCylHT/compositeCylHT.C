@@ -25,15 +25,21 @@ int main()
 	s1.printDetail();
 	//s1.solveTransient();
 	//s2.solveSteady();
-	s3.setInitialTemp(500);
-	s2.setRadiationBC("Top",1000);
+	s2.setInitialTemp(5000);
+	s2.setConvectionBC();
+	s3.setInitialTemp(5000);
+	s3.setConvectionRadiationBC();
 	vector<vector<Shell>> s
     {
         {s2}
     };
-	solveSystem(s);
-	//s2.solveTransient();
-	//s2.printDetail();
+	//solveSystem(s);
+	s2.solveTransient();
+	s3.solveTransient();
+	cout<<"-----s2-------"<<endl;
+	s2.printTe();
+	cout<<"-----s3-------"<<endl;
+	s3.printTe();
     	
 	return 0;
 }

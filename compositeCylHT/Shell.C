@@ -13,7 +13,7 @@ Shell::Shell() : axi(true),		   //axisymmetric, i.e., for tube
 				 lbc(constTemp), rbc(constTemp), bbc(constTemp), tbc(constTemp),
 				 TLeft(300), TRight(300), TBottom(300), TTop(500),
 				 qLeft(0), qRight(0), qBottom(100), qTop(-50),
-				 TfLeft(300), TfRight(300), TfBottom(300), TfTop(500),
+				 //TLeft(300), TRight(300), TBottom(300), TTop(500),
 				 hfL(10), hfR(10), hfB(10), hfT(50),
 				 eps(0.8),
 				 maxiter(1000),
@@ -142,26 +142,54 @@ void Shell::setConvectionBC(string boundary, double Tinf, double h)
 	if (boundary == "Left")
 	{
 		lbc = convection;
-		TfLeft = Tinf, hfL = h;
+		TLeft = Tinf, hfL = h;
 	}
 	else if (boundary == "Right")
 	{
 		rbc = convection;
-		TfRight = Tinf, hfR = h;
+		TRight = Tinf, hfR = h;
 	}
 	else if (boundary == "Bottom")
 	{
 		bbc = convection;
-		TfBottom = Tinf, hfB = h;
+		TBottom = Tinf, hfB = h;
 	}
 	else if (boundary == "Top")
 	{
 		tbc = convection;
-		TfTop = Tinf, hfT = h;
+		TTop = Tinf, hfT = h;
 	}
 	else
 	{
 		cout << "Wrong boundary specified in Convection boundary condition" << endl;
+		exit(1);
+	}
+}
+void Shell::setConvectionRadiationBC(string boundary, double Tamb, double h, double emissivity)
+{
+	if (boundary == "Left")
+	{
+		lbc = convectionRadiation;
+		TLeft = Tamb, hfL = h, eps = emissivity;
+	}
+	else if (boundary == "Right")
+	{
+		rbc = convectionRadiation;
+		TRight = Tamb, hfR = h, eps = emissivity;
+	}
+	else if (boundary == "Bottom")
+	{
+		bbc = convectionRadiation;
+		TBottom = Tamb, hfB = h, eps = emissivity;
+	}
+	else if (boundary == "Top")
+	{
+		tbc = convectionRadiation;
+		TTop = Tamb, hfT = h, eps = emissivity;
+	}
+	else
+	{
+		cout << "Wrong boundary specified in Convection - Radiation boundary condition" << endl;
 		exit(1);
 	}
 }
@@ -503,13 +531,16 @@ void Shell::solveSteady(int maxIter){
 					te[j][0] = te[j][1] + 0.5 * dx[1] * qLeft / tk[j][1]; //heat flux into the system is +ve
 					break;
 				case convection:
-					te[j][0] = (hfL * TfLeft + 2 * te[j][1] * tk[j][1] / dx[1]) / (hfL + 2 * tk[j][1] / dx[1]);
+					te[j][0] = (hfL * TLeft + 2 * te[j][1] * tk[j][1] / dx[1]) / (hfL + 2 * tk[j][1] / dx[1]);
 					break;
 				case ambientRadiation:
 					qr = eps*5.67e-8*(pow(TLeft,4) -pow(te[j][1],4));
 					te[j][0] = te[j][1] + 0.5 * dx[1] * qr / tk[j][1]; //heat flux into the system is +ve
 					break;
-				
+				case convectionRadiation:
+					hfL = hfL + eps*5.67e-8*(pow(TLeft,2) + pow(te[j][1],2)* (te[j][1] + TLeft) );
+					te[j][0] = (hfL * TLeft + 2 * te[j][1] * tk[j][1] / dx[1]) / (hfL + 2 * tk[j][1] / dx[1]);
+					break;
 				default:
 					te[j][0] = TLeft;
 					break;
@@ -528,11 +559,15 @@ void Shell::solveSteady(int maxIter){
 					te[j][N + 1] = te[j][N] + 0.5 * dx[N] * qRight / tk[j][N]; //heat flux into the system is +ve
 					break;
 				case convection:
-					te[j][N + 1] = (hfR * TfRight + 2 * te[j][N] * tk[j][N] / dx[N]) / (hfR + 2 * tk[j][N] / dx[N]);
+					te[j][N + 1] = (hfR * TRight + 2 * te[j][N] * tk[j][N] / dx[N]) / (hfR + 2 * tk[j][N] / dx[N]);
 					break;
 				case ambientRadiation:
 					qr = eps*5.67e-8*(pow(TRight,4) -pow(te[j][N],4));
 					te[j][N + 1] = te[j][N] + 0.5 * dx[N] * qr / tk[j][N]; //heat flux into the system is +ve
+					break;
+				case convectionRadiation:
+					hfR = hfR + eps*5.67e-8*(pow(TRight,2) + pow(te[j][N],2)* (te[j][N] + TRight) );
+					te[j][N + 1] = (hfR * TRight + 2 * te[j][N] * tk[j][N] / dx[N]) / (hfR + 2 * tk[j][N] / dx[N]);
 					break;
 				default:
 					te[j][0] = TRight;
@@ -552,12 +587,16 @@ void Shell::solveSteady(int maxIter){
 					te[0][i] = te[1][i] + 0.5 * dy[1] * qBottom / tk[1][i]; //heat flux into the system is +ve
 					break;
 				case convection:
-					te[0][i] = (hfB * TfBottom + 2 * te[1][i] * tk[1][i] / dy[1]) / (hfB + 2 * tk[1][i] / dy[1]);
+					te[0][i] = (hfB * TBottom + 2 * te[1][i] * tk[1][i] / dy[1]) / (hfB + 2 * tk[1][i] / dy[1]);
 					break;
 				case ambientRadiation:
 					qr = eps*5.67e-8*(pow(TBottom,4) -pow(te[1][i],4));
 					te[0][i] = te[1][i] + 0.5 * dy[1] * qr / tk[1][i]; //heat flux into the system is +ve
-					break;	
+					break;
+				case convectionRadiation:
+					hfB = hfB + eps*5.67e-8*(pow(TBottom,2) + pow(te[1][i],2)* (te[1][i] + TBottom) );	
+					te[0][i] = (hfB * TBottom + 2 * te[1][i] * tk[1][i] / dy[1]) / (hfB + 2 * tk[1][i] / dy[1]);
+					break;
 				default:
 					te[0][i] = TBottom;
 					break;
@@ -576,12 +615,16 @@ void Shell::solveSteady(int maxIter){
 					te[M + 1][i] = te[M][i] + 0.5 * dy[M] * qTop / tk[M][i]; //heat flux into the system is +ve
 					break;
 				case convection:
-					te[M + 1][i] = (hfT * TfTop + 2 * te[M][i] * tk[M][i] / dy[M]) / (hfT + 2 * tk[M][i] / dy[M]);
+					te[M + 1][i] = (hfT * TTop + 2 * te[M][i] * tk[M][i] / dy[M]) / (hfT + 2 * tk[M][i] / dy[M]);
 					break;
 				case ambientRadiation:
 					qr = eps*5.67e-8*(pow(TTop,4) -pow(te[M][i],4));
 					te[M + 1][i] = te[M][i] + 0.5 * dy[M] * qr / tk[M][i]; //heat flux into the system is +ve
-					break;	
+					break;
+				case convectionRadiation:
+					hfT = hfT + eps*5.67e-8*(pow(TTop,2) + pow(te[M][i],2)* (te[M][i] + TTop) );		
+					te[M + 1][i] = (hfT * TTop + 2 * te[M][i] * tk[M][i] / dy[M]) / (hfT + 2 * tk[M][i] / dy[M]);
+					break;
 				default:
 					te[M + 1][i] = TTop;
 					break;
@@ -696,7 +739,13 @@ void Shell::printDetail()
 		cout << "Left boundary condition is constHeatFlux of " << qLeft << " watts" << endl;
 		break;
 	case convection:
-		cout << "Left boundary condition is connvection with Tf = " << TfLeft << " K and hf = " << hfL << " W/m-k " << endl;
+		cout << "Left boundary condition is connvection with Tf = " << TLeft << " K and hf = " << hfL << " W/m-k " << endl;
+		break;
+	case ambientRadiation:
+		cout << "Left boundary condition is ambientRadiation with Tamb = " << TLeft << " K and emissivity = " << eps<< endl;
+		break;
+	case convectionRadiation:
+		cout << "Left boundary condition is combined connvection and radiation with Tamb = " << TLeft << " K, hf = " << hfL << " W/m-k  and emissivity = " << eps << endl;
 		break;
 	default:
 		cout << "Invalid boundary condition " << endl;
@@ -711,8 +760,13 @@ void Shell::printDetail()
 		cout << "Right boundary condition is constHeatFlux of " << qRight << " watts" << endl;
 		break;
 	case convection:
-		cout << "Right boundary condition is connvection with Tf = " << TfRight << " K and hf = " << hfR << "W/m-k " << endl;
+		cout << "Right boundary condition is connvection with Tf = " << TRight << " K and hf = " << hfR << "W/m-k " << endl;
 		break;
+	case ambientRadiation:
+		cout << "Right boundary condition is ambientRadiation with Tamb = " << TRight << " K and emissivity = " << eps<< endl;
+		break;
+	case convectionRadiation:
+		cout << "Right boundary condition is combined connvection and radiation with Tamb = " << TRight << " K, hf = " << hfR << " W/m-k  and emissivity = " << eps << endl;
 	default:
 		cout << "Invalid boundary condition " << endl;
 		break;
@@ -726,8 +780,13 @@ void Shell::printDetail()
 		cout << "Bottom boundary condition is constHeatFlux of " << qBottom << " watts" << endl;
 		break;
 	case convection:
-		cout << "Bottom boundary condition is connvection with Tf = " << TfBottom << " K and hf = " << hfL << "W/m-k " << endl;
+		cout << "Bottom boundary condition is connvection with Tf = " << TBottom << " K and hf = " << hfL << "W/m-k " << endl;
 		break;
+	case ambientRadiation:
+		cout << "Bottom boundary condition is ambientRadiation with Tamb = " << TBottom << " K and emissivity = " << eps<< endl;
+		break;
+	case convectionRadiation:
+		cout << "Bottom boundary condition is combined connvection and radiation with Tamb = " << TBottom << " K, hf = " << hfB << " W/m-k  and emissivity = " << eps << endl;
 	default:
 		cout << "Invalid boundary condition " << endl;
 		break;
@@ -741,8 +800,13 @@ void Shell::printDetail()
 		cout << "Top boundary condition is constHeatFlux of " << qTop << " watts" << endl;
 		break;
 	case convection:
-		cout << "Top boundary condition is connvection with Tf = " << TfTop << " K and hf = " << hfT << "W/m-k " << endl;
+		cout << "Top boundary condition is connvection with Tf = " << TTop << " K and hf = " << hfT << "W/m-k " << endl;
 		break;
+	case ambientRadiation:
+		cout << "Top boundary condition is ambientRadiation with Tamb = " << TTop << " K and emissivity = " << eps<< endl;
+		break;
+	case convectionRadiation:
+		cout << "Top boundary condition is combined connvection and radiation with Tamb = " << TTop << " K, hf = " << hfT << " W/m-k  and emissivity = " << eps << endl;
 	default:
 		cout << "Invalid boundary condition " << endl;
 		break;

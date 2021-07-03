@@ -23,7 +23,7 @@ class Shell{
         double initTemp;//Initial uniform temperature of the tube
 
         //Boundary conditions
-        enum bc {constTemp, constHeatFlux, convection, ambientRadiation};
+        enum bc {constTemp, constHeatFlux, convection, ambientRadiation, convectionRadiation};
         bc lbc,rbc,bbc,tbc;
 
         // variables for bc
@@ -31,7 +31,7 @@ class Shell{
         // heat flux bc
         double qLeft,qRight,qBottom,qTop;
         //convection
-        double TfLeft,TfRight,TfBottom,TfTop;
+        //double TLeft,TRight,TBottom,TTop;
         double hfL,hfR,hfB,hfT;
         //ambientRadiation
         double eps;
@@ -53,18 +53,19 @@ class Shell{
         Shell();
         //setters
         void setConnected();//change the connection flag to true
-        void setGeometry(double length=0.04, double width = 0.02, bool cylindrical=true, double innerRadius = 0.1);
-        void setLength(double length=0.04);
-        void setWidth(double width=0.04);
+        void setGeometry(double length = 0.04, double width = 0.02, bool cylindrical=true, double innerRadius = 0.1);
+        void setLength(double length = 0.04);
+        void setWidth(double width = 0.04);
         void setInnerRadius(double innerRadius = 0.1);
-        void setSimulationTime(double simtime=20);
+        void setSimulationTime(double simtime = 20);
         void setTimeStep( double delt=0.1);
-        void setMaterialProperties(double Thermal_cond=16,double Cp = 500,double Density = 8000);
+        void setMaterialProperties(double Thermal_cond = 16,double Cp = 500,double Density = 8000);
         void setInitialTemp(double initialTemp = 300);
         void setConstantTempBC(string boundary= "Left", double Temp = 300);
         void setConstantHeatfluxBC(string boundary= "Bottom", double q = 0);
-        void setConvectionBC(string boundary= "Top", double Tinf=300, double h = 10);
-        void setRadiationBC(string boundary = "Top", double Tamb=300, double emissivity=0.8);
+        void setConvectionBC(string boundary= "Top", double Tinf = 300, double h = 10);
+        void setRadiationBC(string boundary = "Top", double Tamb = 300, double emissivity = 0.8);
+        void setConvectionRadiationBC(string boundary = "Top", double Tamb = 300, double h = 10, double emissivity = 0.8);
         void setTe(int j, int i, double val);
         void setTe0(int j, int i, double val);
         void setTep(int j, int i, double val);
