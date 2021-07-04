@@ -221,6 +221,64 @@ void Shell::setRadiationBC(string boundary, double Tamb, double emissivity)
 		exit(1);
 	}
 }
+
+//interShellBC
+void Shell::setRightInterShellContactResistance(double contactResistance){
+	if (rightISBC.empty())
+	{
+		rightISBC.push_back(contactResistance);
+	}
+	else
+	{
+		rightISBC[0] = contactResistance;
+	}	
+}
+void Shell::setBottomInterShellContactResistance(double contactResistance)
+{
+	if (bottomISBC.empty())
+	{
+		bottomISBC.push_back(contactResistance);
+	}
+	else
+	{
+		bottomISBC[0] = contactResistance;
+	}	
+}
+void Shell::setBottomInterShellRadiation(double thisShellEmissivity, double otherShellEmissivity, double radialGap)
+{
+	if (bottomISBC.empty())
+	{
+		bottomISBC.push_back(thisShellEmissivity);
+		bottomISBC.push_back(otherShellEmissivity);
+		bottomISBC.push_back(radialGap);
+	}
+	else
+	{
+		cout<<"Bottom Inter-Shell boundary condition given twice"<<endl;
+		exit(1);
+	}	
+
+}
+void Shell::setBottomInterShellRadiationWithConvection(double thisShellEmissivity,
+             double otherShellEmissivity, double radialGap, double hf, double Tf)
+{
+	if (bottomISBC.empty())
+	{
+		bottomISBC.push_back(thisShellEmissivity);
+		bottomISBC.push_back(otherShellEmissivity);
+		bottomISBC.push_back(radialGap);
+		bottomISBC.push_back(hf);
+		bottomISBC.push_back(Tf);
+	}
+	else
+	{
+		cout<<"Bottom Inter-Shell boundary condition given twice"<<endl;
+		exit(1);
+	}	
+
+}
+
+
 void Shell::setInitialTemp(double initialTemp){
 	initTemp = initialTemp;
 }
@@ -633,10 +691,7 @@ void Shell::solveSteady(int maxIter){
 		}
 		void Shell::tdma(int j)
 		{ //calls inside advanceOneTimeStep
-			print1dVector(ta);
-			print1dVector(tb);
-			print1dVector(tc);
-			print1dVector(td);
+
 			//print1dVector(ta);		
 			double alpha[N + 2]{0}, beta[N + 2]{0}, dum[N + 2]{0};
 			for (int i = 0; i < N + 2; i++)
@@ -892,7 +947,7 @@ void Shell::printTe()
         }   
     }
 	shellNo=0;
-	setConnectionBC(v);
+	applyInterShellBC(v);
     
 	while(t<simTime)
 	{
@@ -904,7 +959,7 @@ void Shell::printTe()
 			}  
 			cout<<endl; 
 		}
-		setConnectionBC(v);
+		applyInterShellBC(v);
 
 		t = t+dt;
 	}
@@ -924,7 +979,7 @@ void Shell::printTe()
 
 }
 
-void setConnectionBC(vector<vector<Shell>> &v){
+void applyInterShellBC(vector<vector<Shell>> &v){
 	for (int i = 0; i < v.size(); i++){
         for (int j = 0; j < v[i].size(); j++){
 			//setting the connection bc
@@ -942,14 +997,15 @@ void setConnectionBC(vector<vector<Shell>> &v){
 					double k1 = v[i][j].getTk(jj,N1);
 					double k2 = v[i][j+1].getTk(jj,1);
 					double Rc = 0;
+					if(!v[i][j].rightISBC.empty()) Rc = v[i][j].rightISBC[0];
 					double q = (T2 -T1)/(dy * Rc + 0.5 * (dx1/k1 + dx2/k2) );
-					cout<<"q = "<<jj<<" - "<<q<<endl;
 					v[i][j].setTe(jj, N1+1 , v[i][j].getTe(jj,N1) + 0.5 * dx1 * q / v[i][j].getTk(jj,N1)); 
 					v[i][j+1].setTe(jj, 0 , v[i][j+1].getTe(jj,1) - 0.5 * dx2 * q / v[i][j+1].getTk(jj,1));		
 				}
 			}
 			//horizontal connection
-			if (i<v.size()-1){
+			if (i<v.size()-1)
+			{	
 				int M2 = v[i+1][j].getM();//M of bottom shall can be different but N2=N1
 				for (int ii = 0; ii < N1 + 2; ii++){
 					double T1 = v[i][j].getTe(1,ii);
@@ -960,9 +1016,45 @@ void setConnectionBC(vector<vector<Shell>> &v){
 					double k1 = v[i][j].getTk(1,ii);
 					double k2 = v[i+1][j].getTk(M2,ii);
 					double Rc = 0;
-					double q = (T2 -T1)/(dx * Rc + 0.5 * (dy1/k1 + dy2/k2) );
-					v[i][j].setTe(0, ii , v[i][j].getTe(1,ii) + 0.5 * dy1 * q / v[i][j].getTk(1,ii)); 
-					v[i+1][j].setTe(M2+1, ii , v[i+1][j].getTe(M2,ii) - 0.5 * dy2 * q / v[i+1][j].getTk(M2,ii));
+					double q{0},qconv1{0},qconv2{0};
+					if(v[i][j].bottomISBC.size()<2)//non zero contact resistance
+					{
+						Rc = v[i][j].bottomISBC[0];//other bcs have atleast 2 arguments
+						q = (T2 -T1)/(dx * Rc + 0.5 * (dy1/k1 + dy2/k2) );
+						v[i][j].setTe(0, ii , v[i][j].getTe(1,ii) + 0.5 * dy1 * q / v[i][j].getTk(1,ii)); 
+						v[i+1][j].setTe(M2+1, ii , v[i+1][j].getTe(M2,ii) - 0.5 * dy2 * q / v[i+1][j].getTk(M2,ii));
+					}
+					if(v[i][j].bottomISBC.size()>2)//radiation(3) & radiation with convection (5)
+					{
+						//get avg temp of both shells
+						double thisShellTemp{0},otherShellTemp{0};
+						for (int k = 0; k < N1; k++)
+						{
+							thisShellTemp += v[i][j].getTe(1,k);
+							otherShellTemp += v[i+1][j].getTe(1,k);
+						}
+						thisShellTemp = thisShellTemp/N1;
+						otherShellTemp = otherShellTemp/N1;
+						//estimate q
+						double eps1 = v[i][j].bottomISBC[0];
+						double eps2 = v[i][j].bottomISBC[1];
+						double r1 = v[i][j].getInnerRadius();
+						double r2 = v[i+1][j].getInnerRadius() + v[i][j].bottomISBC[2];//radial gap added
+						q = 5.67e-8*( pow(otherShellTemp,4) - pow(thisShellTemp,4) )
+							/(1/eps1 + (1 - eps2)/eps2 * pow(r1/r2,2));
+						if(v[i][j].bottomISBC.size()==5)//radiation with convection
+						{
+							double h = v[i][j].bottomISBC[3];
+							double Tf = v[i][j].bottomISBC[4];
+							qconv1 = h*(Tf - thisShellTemp);		
+							qconv2 = h*(Tf - otherShellTemp);		
+						}
+
+						//setTe for both
+						v[i][j].setTe(0, ii , v[i][j].getTe(1,ii) + 0.5 * dy1 * (q + qconv1) / v[i][j].getTk(1,ii)); 
+						v[i+1][j].setTe(M2+1, ii , v[i+1][j].getTe(M2,ii) - 0.5 * dy2 * (q - qconv2) / v[i+1][j].getTk(M2,ii));
+					}
+					
 				}			
 			}
 
@@ -1123,10 +1215,6 @@ void advanceOneTimeStep(Shell &s)
 void tdma(Shell &s, int &j, int &N, vector<double> &ta, vector<double> &tb, vector<double> &tc, vector<double> &td )
 { //calls inside advanceOneTimeStep
 	double alpha[N + 2]{0}, beta[N + 2]{0}, dum[N + 2]{0};
-	print1dVector(ta);
-	print1dVector(tb);
-	print1dVector(tc);
-	print1dVector(td);
 
 	for (int i = 0; i < N + 2; i++)
 	{
