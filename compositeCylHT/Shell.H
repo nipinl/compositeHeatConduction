@@ -1,6 +1,7 @@
 #ifndef SHELL_H_
 #define SHEL_H_
 #include <iostream>
+#include<fstream>
 #include <vector>
 #include <math.h>
 using namespace std;
@@ -113,7 +114,7 @@ public:
     double getRelaxationCoeff();
 
     //Transient solver
-    void solveTransient();
+    void solveTransient(string fileName= "temperature", int writeInterval = 1);
     //Steady solver
     void solveSteady(int maxIter = 1000);
 

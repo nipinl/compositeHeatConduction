@@ -349,13 +349,37 @@ int Shell::getM(){return M;}
 int Shell::getN(){return N;}
 
 //Transient solver
-void Shell::solveTransient(){
+void Shell::solveTransient(string fileName, int writeInterval){
 	preprocessShell();
 	double t{0};
+	ofstream outFile;
+	outFile.open(fileName.c_str());
+	outFile<<Length<<'\t'<<Width<<'\t'<<N<<'\t'<<M<<'\t'<<(int)(std::round(simTime / dt)+1)<<endl;
+	outFile.close();
+	outFile.open(fileName.c_str(),std::ios_base::app);
+
 	while(t<simTime){
 		advanceOneTimeStep();
+		int count{0};
+		if ((int)(std::round(t / dt)) % writeInterval == 0)
+		{
+			for (int j = 1; j < M+1; j++)
+			{
+				for (int i = 1; i < N+1; i++)
+				{
+					outFile<<te[j][i]<<"\t";
+					count++;
+				}
+				outFile<<endl;
+				
+			}
+			
+		}
 		t=t+dt;//increment time step
 	}
+
+
+	outFile.close();
 }
 //Steady solver
 void Shell::solveSteady(int maxIter){

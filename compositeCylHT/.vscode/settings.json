@@ -33,6 +33,9 @@
         "initializer_list": "cpp",
         "utility": "cpp",
         "limits": "cpp",
-        "deque": "cpp"
+        "deque": "cpp",
+        "iosfwd": "cpp",
+        "chrono": "cpp",
+        "algorithm": "cpp"
     }
 }

@@ -36,7 +36,7 @@ int main()
 		{s3,s4}
     };
 	solveSystem(s);
-	//s2.solveTransient();
+	s2.solveTransient();
 	//s3.solveTransient();
 	//s3.printTe();
     	
