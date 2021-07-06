@@ -918,13 +918,30 @@ void solveSystem(vector<vector<Shell>> &v){
 	//Ri for axi
 	int rows = v.size();
 	int cols = v[0].size();
-	int shellNo{0};
+	int totalShells = rows*cols;
+	double Length{0}, Width{0};
+	int M{0},N{0};
 	double simTime = v[0][0].getSimulationTime();
 	double dt = v[0][0].getTimeStep();
 	double t=0;
 
-	
+	for (auto i:rows)
+	{
+		M += v[i][0].getM();
+		Width += v[i][0].getWidth();
+		for (auto j:cols)
+		{
+			N += v[0][j].getN();
+			Length += v[0][j].getLength();
+		}
+	}
+
+	ofstream outFile;
+	outFile.open("geometry");
+	outFile<<totalShells<<'\t'<<Length<<'\t'<<Width<<'\t'<<N<<'\t'<<M<<'\t'<<(int)(std::round(simTime / dt)+1)<<endl;
+	outFile.close();
 	//Display the details
+	int shellNo{0};
 	for (int i = 0; i < v.size(); i++){
         for (int j = 0; j < v[i].size(); j++){
 			shellNo++;
@@ -933,7 +950,6 @@ void solveSystem(vector<vector<Shell>> &v){
 			v[i][j].setTimeStep(v[0][0].getTimeStep());
 			if (j>0) {v[i][j].setWidth(v[i][0].getWidth()); }
 			if (i>0) {v[i][j].setLength(v[0][j].getLength());}
-
 
 			v[i][j].printDetail();
 			v[i][j].preprocessShell();
@@ -954,9 +970,22 @@ void solveSystem(vector<vector<Shell>> &v){
 			cout<<endl; 
 		}
 		applyInterShellBC(v);
-		//outputting file
-
 		t = t+dt;
+		
+		//outputting file
+		if ((int)(std::round(t / dt)) % writeInterval == 0)
+		{
+					for (int j = 1; j < M+1; j++)
+					{
+						for (int i = 1; i < N+1; i++)
+						{
+							outFile<<te[j][i]<<"\t";
+							count++;
+						}
+						outFile<<endl;
+					}
+		}
+
 	}
 
 	shellNo=0;
