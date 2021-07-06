@@ -16,21 +16,23 @@ print(geom)
 x = np.linspace(0, 4, 3)
 y = np.linspace(0, 2, 5)
 [X, Y] = np.meshgrid(x,y)
-for n in range(times):
+colorMapEnable = 0 
+for n in range(times-1):
     fp = open("temperature","r+")
     for i, line in enumerate(fp):
         if(i>n*5 and i < (n+1)*5+1):
             temp.append(line.split())
             print(i)
-    print(n)
-    print(temp)
-    fig, ax = plt.subplots(1, 1)
-    ax.contourf(X,Y,temp)
-    ax.set_title('Filled Contour Plot')
+
+    #fig, ax = plt.subplots(1, 1)
+    plt.contourf(X,Y,temp)
+    """ ax.set_title('Filled Contour Plot')
     ax.set_xlabel('feature_x')
-    ax.set_ylabel('feature_y')
+    ax.set_ylabel('feature_y') """
+    if(colorMapEnable==0):
+        plt.colorbar()
+    colorMapEnable=1
     plt.savefig(str(n).zfill(5) )
     temp.clear()
     fp.close()
-#print(temp)
-#temp.clear()
+
