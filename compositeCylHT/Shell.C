@@ -353,11 +353,16 @@ void Shell::solveTransient(string fileName, int writeInterval){
 	preprocessShell();
 	double t{0};
 	ofstream outFile;
+	//writing geometry data for plotting using python
+	//no of shells Length Width N M no of time data
+	outFile.open("geometry");
+	outFile<<1<<'\t'<<Length<<'\t'<<Width<<'\t'<<N<<'\t'<<M<<'\t'<<(int)(std::round(simTime / dt)+1)<<endl;
+	outFile.close();
+
+	//just to re write any existing temperature file
 	outFile.open(fileName.c_str());
-	outFile<<Length<<'\t'<<Width<<'\t'<<N<<'\t'<<M<<'\t'<<(int)(std::round(simTime / dt)+1)<<endl;
 	outFile.close();
 	outFile.open(fileName.c_str(),std::ios_base::app);
-
 	while(t<simTime){
 		advanceOneTimeStep();
 		int count{0};
@@ -371,13 +376,10 @@ void Shell::solveTransient(string fileName, int writeInterval){
 					count++;
 				}
 				outFile<<endl;
-				
 			}
-			
 		}
 		t=t+dt;//increment time step
 	}
-
 
 	outFile.close();
 }
@@ -910,40 +912,8 @@ void Shell::printTe()
 }
 
 //non member function methods
-/* void connectShells(Shell &s1, Shell &s2, double gap, double interfaceResistance)
-{
-	if (s1.isConnected() || s2.isConnected())
-	{
-		cout << "Error: One of the shell is already connected" << endl;
-		exit(1);
-	}
-	bool err = false;
-	if (s1.getType() && !s2.getType())
-	{
-		cout << "Incompatible connection. First Shell is cylindrical and second is rectangular" << endl;
-		err = true;
-	}
-	if (!s1.getType() && s2.getType())
-	{
-		cout << "Incompatible connection. First Shell is rectangular and second is cylindrical" << endl;
-		err = true;
-	}
 
-	if (s1.getType() && s2.getType())
-	{ //checking if both are cylindrical
-		if (s2.getInnerRadius() < (s1.getInnerRadius() + s1.getWidth()))
-		{
-			cout << "Cannot connect !!. Inner radius of second shell is smaller than the outer radius of first shell" << endl;
-			err = true;
-		}
-	}
-	if (err)
-		exit(1);
-
-	s1.setConnected();
-	s2.setConnected();
-}
- */void solveSystem(vector<vector<Shell>> &v){
+void solveSystem(vector<vector<Shell>> &v){
 	//width for horizontal, length for vertical connection
 	//Ri for axi
 	int rows = v.size();
@@ -984,6 +954,7 @@ void Shell::printTe()
 			cout<<endl; 
 		}
 		applyInterShellBC(v);
+		//outputting file
 
 		t = t+dt;
 	}

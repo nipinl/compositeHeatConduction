@@ -35,7 +35,7 @@ int main()
         {s1,s2},
 		{s3,s4}
     };
-	solveSystem(s);
+	//solveSystem(s);
 	s2.solveTransient();
 	//s3.solveTransient();
 	//s3.printTe();
