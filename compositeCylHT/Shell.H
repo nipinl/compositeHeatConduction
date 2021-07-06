@@ -114,7 +114,7 @@ public:
     double getRelaxationCoeff();
 
     //Transient solver
-    void solveTransient(string fileName= "temperature", int writeInterval = 1);
+    void solveTransient(string fileName= "s", int writeInterval = 1);
     //Steady solver
     void solveSteady(int maxIter = 1000);
 
@@ -138,7 +138,7 @@ public:
 
 void connectShells(Shell &s1, Shell &s2, double gap = 0.01, double interfaceResistance = 0); //assume outer(top) of first is connected to inner(bottom) of second
 void tdma(Shell &s, int &j, int &N, vector<double> &ta, vector<double> &tb, vector<double> &tc, vector<double> &td);
-void solveSystem(vector<vector<Shell>> &v);
+void solveSystem(vector<vector<Shell>> &v, string fileName= "S", int writeInterval = 1);
 void advanceOneTimeStep(Shell &s);
 void applyInterShellBC(vector<vector<Shell>> &v);
 void print2dVector(vector<vector<double>> const &v);

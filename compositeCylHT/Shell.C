@@ -355,14 +355,16 @@ void Shell::solveTransient(string fileName, int writeInterval){
 	ofstream outFile;
 	//writing geometry data for plotting using python
 	//no of shells Length Width N M no of time data
-	outFile.open("geometry");
+	string geomFile = fileName+"_geometry"; 
+	string tempFile = fileName+"_temperature";
+	outFile.open(geomFile.c_str());
 	outFile<<1<<'\t'<<Length<<'\t'<<Width<<'\t'<<N<<'\t'<<M<<'\t'<<(int)(std::round(simTime / dt)+1)<<endl;
 	outFile.close();
 
-	//just to re write any existing temperature file
-	outFile.open(fileName.c_str());
+	//open tempFile in re write mode to overwrite any existing default file
+	outFile.open(tempFile.c_str());
 	outFile.close();
-	outFile.open(fileName.c_str(),std::ios_base::app);
+	outFile.open(tempFile.c_str(),std::ios_base::app);
 	while(t<simTime){
 		advanceOneTimeStep();
 		int count{0};
@@ -913,7 +915,7 @@ void Shell::printTe()
 
 //non member function methods
 
-void solveSystem(vector<vector<Shell>> &v){
+void solveSystem(vector<vector<Shell>> &v, string fileName, int writeInterval){
 	//width for horizontal, length for vertical connection
 	//Ri for axi
 	int rows = v.size();
@@ -925,21 +927,18 @@ void solveSystem(vector<vector<Shell>> &v){
 	double dt = v[0][0].getTimeStep();
 	double t=0;
 
-	for (auto i:rows)
+	for (int i = 0; i < v.size(); i++)
 	{
 		M += v[i][0].getM();
 		Width += v[i][0].getWidth();
-		for (auto j:cols)
+		for (int j = 0; j < v[i].size(); j++)
 		{
 			N += v[0][j].getN();
 			Length += v[0][j].getLength();
 		}
 	}
 
-	ofstream outFile;
-	outFile.open("geometry");
-	outFile<<totalShells<<'\t'<<Length<<'\t'<<Width<<'\t'<<N<<'\t'<<M<<'\t'<<(int)(std::round(simTime / dt)+1)<<endl;
-	outFile.close();
+	
 	//Display the details
 	int shellNo{0};
 	for (int i = 0; i < v.size(); i++){
@@ -958,7 +957,17 @@ void solveSystem(vector<vector<Shell>> &v){
     }
 	shellNo=0;
 	applyInterShellBC(v);
-    
+	//for file printing
+	ofstream outFile;
+	string geomFile = fileName+".geom"; 
+	string tempFile = fileName+".temp";
+	outFile.open(geomFile.c_str());
+	outFile<<totalShells<<'\t'<<Length<<'\t'<<Width<<'\t'<<N<<'\t'<<M<<'\t'<<(int)(std::round(simTime / dt)+1)<<endl;
+	outFile.close();
+    outFile.open(tempFile.c_str());
+	outFile.close();
+	outFile.open(tempFile.c_str(),std::ios_base::app);
+	
 	while(t<simTime)
 	{
 		for (int i = 0; i < v.size(); i++)
@@ -972,21 +981,27 @@ void solveSystem(vector<vector<Shell>> &v){
 		applyInterShellBC(v);
 		t = t+dt;
 		
-		//outputting file
-		if ((int)(std::round(t / dt)) % writeInterval == 0)
+		//outputting file(csv)
+		if ((int)(std::round(t / dt)) % writeInterval == 0)//write only at a user specified intervals
 		{
-					for (int j = 1; j < M+1; j++)
+			for (int i = 0; i < v.size(); i++)
+			{
+				for(int jj=1;jj<v[i][0].getM()+1;jj++)
+				{
+					for (int j = 0; j < v[i].size(); j++)
 					{
-						for (int i = 1; i < N+1; i++)
+						for(int ii=1;ii<v[i][j].getN()+1;ii++)
 						{
-							outFile<<te[j][i]<<"\t";
-							count++;
+							outFile<<v[i][j].getTe(jj,ii)<<",";
 						}
-						outFile<<endl;
+				
 					}
+					outFile<<endl;
+				}
+    		}
 		}
 
-	}
+	}//end of while loop checking t<simTime
 
 	shellNo=0;
 	for (int i = 0; i < v.size(); i++){
