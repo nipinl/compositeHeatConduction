@@ -355,8 +355,8 @@ void Shell::solveTransient(string fileName, int writeInterval){
 	ofstream outFile;
 	//writing geometry data for plotting using python
 	//no of shells Length Width N M no of time data
-	string geomFile = fileName+"_geometry"; 
-	string tempFile = fileName+"_temperature";
+	string geomFile = fileName+".geom"; 
+	string tempFile = fileName+".temp";
 	outFile.open(geomFile.c_str());
 	outFile<<1<<'\t'<<Length<<'\t'<<Width<<'\t'<<N<<'\t'<<M<<'\t'<<(int)(std::round(simTime / dt)+1)<<endl;
 	outFile.close();
@@ -374,7 +374,8 @@ void Shell::solveTransient(string fileName, int writeInterval){
 			{
 				for (int i = 1; i < N+1; i++)
 				{
-					outFile<<te[j][i]<<"\t";
+					outFile<<te[j][i];
+					if (i <N ) outFile<<",";
 					count++;
 				}
 				outFile<<endl;
@@ -931,11 +932,11 @@ void solveSystem(vector<vector<Shell>> &v, string fileName, int writeInterval){
 	{
 		M += v[i][0].getM();
 		Width += v[i][0].getWidth();
-		for (int j = 0; j < v[i].size(); j++)
-		{
-			N += v[0][j].getN();
-			Length += v[0][j].getLength();
-		}
+	}
+	for (int j = 0; j < v[0].size(); j++)
+	{
+		N += v[0][j].getN();
+		Length += v[0][j].getLength();
 	}
 
 	
@@ -992,7 +993,9 @@ void solveSystem(vector<vector<Shell>> &v, string fileName, int writeInterval){
 					{
 						for(int ii=1;ii<v[i][j].getN()+1;ii++)
 						{
-							outFile<<v[i][j].getTe(jj,ii)<<",";
+							outFile<<v[i][j].getTe(jj,ii);
+							if (ii == v[i][j].getN() && j == v[i].size()-1){}
+							else outFile<<",";
 						}
 				
 					}

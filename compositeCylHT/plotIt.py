@@ -3,7 +3,7 @@ import numpy as np
 geom = []
 temp = []
 
-fp = open("geometry","r+")
+fp = open("s.geom","r+")
 for i, line in enumerate(fp):
     if i == 0:
         geom.append(line.split())
@@ -11,22 +11,22 @@ fp.close()
 
 #getting data
 shells = geom[0][0]
-Length = geom[0][1]
-Width = geom[0][2]
+Length = float(geom[0][1])
+Width = float(geom[0][2])
 N = int(geom[0][3])
 M = int(geom[0][4])
 times = int(geom[0][5])
 
-x = np.linspace(0, 4, 3)
-y = np.linspace(0, 2, 5)
+x = np.linspace(0, Length, N)
+y = np.linspace(0, Width, M)
 [X, Y] = np.meshgrid(x,y)
 enableColorBar=0
 
 for n in range(times-1):
-    fp = open("temperature","r+")
+    fp = open("s.temp","r+")
     for i, line in enumerate(fp):
-        if(i>n*5 and i < (n+1)*5+1):
-            temp.append(line.split())
+        if(i>=n*M and i < (n+1)*M):
+            temp.append(line.split(','))
             #print(i)
     #fig, ax = plt.subplots(1, 1)
     plt.contourf(X,Y,temp)
