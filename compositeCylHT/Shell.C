@@ -3,8 +3,8 @@
 //Constructor
 Shell::Shell() : axi(true),		   //axisymmetric, i.e., for tube
 				 connected(false), //this shell is not connected to other
-				 M(5),			   //divisions along y(r)
-				 N(3),			   //divisions along x, i.e., along length
+				 M(15),			   //divisions along y(r)
+				 N(30),			   //divisions along x, i.e., along length
 				 ri(0.1),		   //inner radius
 				 Length(0.04),
 				 Width(0.02),
@@ -16,6 +16,7 @@ Shell::Shell() : axi(true),		   //axisymmetric, i.e., for tube
 				 //TLeft(300), TRight(300), TBottom(300), TTop(500),
 				 hfL(10), hfR(10), hfB(10), hfT(50),
 				 eps(0.8),
+				 rightISBC{0},bottomISBC{0},
 				 maxiter(1000),
 				 re(1),
 				 simTime(20),
@@ -963,11 +964,12 @@ void solveSystem(vector<vector<Shell>> &v, string fileName, int writeInterval){
 	string geomFile = fileName+".geom"; 
 	string tempFile = fileName+".temp";
 	outFile.open(geomFile.c_str());
-	outFile<<totalShells<<'\t'<<Length<<'\t'<<Width<<'\t'<<N<<'\t'<<M<<'\t'<<(int)(std::round(simTime / dt)+1)<<endl;
+	outFile<<rows<<'\t'<<Length<<'\t'<<Width<<'\t'<<N<<'\t'<<M<<'\t'<<(int)(std::round(simTime / dt)+1)<<endl;
 	outFile.close();
     outFile.open(tempFile.c_str());
 	outFile.close();
 	outFile.open(tempFile.c_str(),std::ios_base::app);
+
 	
 	while(t<simTime)
 	{
@@ -981,11 +983,10 @@ void solveSystem(vector<vector<Shell>> &v, string fileName, int writeInterval){
 		}
 		applyInterShellBC(v);
 		t = t+dt;
-		
 		//outputting file(csv)
 		if ((int)(std::round(t / dt)) % writeInterval == 0)//write only at a user specified intervals
 		{
-			for (int i = 0; i < v.size(); i++)
+			for (int i = v.size()-1; i >=0 ; i--)
 			{
 				for(int jj=1;jj<v[i][0].getM()+1;jj++)
 				{
@@ -1003,9 +1004,10 @@ void solveSystem(vector<vector<Shell>> &v, string fileName, int writeInterval){
 				}
     		}
 		}
+		
 
 	}//end of while loop checking t<simTime
-
+	outFile.close();
 	shellNo=0;
 	for (int i = 0; i < v.size(); i++){
         for (int j = 0; j < v[i].size(); j++){

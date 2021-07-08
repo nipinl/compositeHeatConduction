@@ -11,7 +11,7 @@ for i, line in enumerate(fp):
 fp.close()
 
 #getting data
-shells = geom[0][0]
+rows = geom[0][0]
 Length = float(geom[0][1])
 Width = float(geom[0][2])
 N = int(geom[0][3])
@@ -28,6 +28,7 @@ maxTemp = data.max()
 
 def getTempForTime(i):
     return data[M*i:M*(i+1),:]
+    #return np.flip(data[M*i:M*(i+1),:],axis=0)
 
 figHeight = int(Width*10/(Width+Length))
 figLength = int(Length*10/(Width+Length))
