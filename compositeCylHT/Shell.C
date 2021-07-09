@@ -3,15 +3,15 @@
 //Constructor
 Shell::Shell() : axi(true),		   //axisymmetric, i.e., for tube
 				 connected(false), //this shell is not connected to other
-				 M(15),			   //divisions along y(r)
-				 N(30),			   //divisions along x, i.e., along length
+				 M(5),			   //divisions along y(r)
+				 N(3),			   //divisions along x, i.e., along length
 				 ri(0.1),		   //inner radius
 				 Length(0.04),
 				 Width(0.02),
-				 tCond(16), spHeat(500), density(8000),
+				 tCond(100), spHeat(100), density(8000),
 				 initTemp(300),
 				 lbc(constTemp), rbc(constTemp), bbc(constTemp), tbc(constTemp),
-				 TLeft(300), TRight(300), TBottom(300), TTop(500),
+				 TLeft(300), TRight(300), TBottom(300), TTop(300),
 				 qLeft(0), qRight(0), qBottom(100), qTop(-50),
 				 //TLeft(300), TRight(300), TBottom(300), TTop(500),
 				 hfL(10), hfR(10), hfB(10), hfT(50),

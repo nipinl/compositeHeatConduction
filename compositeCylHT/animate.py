@@ -24,11 +24,13 @@ y = np.linspace(0, Width, M)
 
 data = np.genfromtxt("s.temp", delimiter=",")
 minTemp = data.min()
-maxTemp = data.max()
+maxTemp = data.max()+0.0001
 
 def getTempForTime(i):
+    print(data[M*i:M*(i+1),:])
     return data[M*i:M*(i+1),:]
     #return np.flip(data[M*i:M*(i+1),:],axis=0)
+
 
 figHeight = int(Width*10/(Width+Length))
 figLength = int(Length*10/(Width+Length))
