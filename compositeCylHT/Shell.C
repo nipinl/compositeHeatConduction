@@ -359,7 +359,7 @@ void Shell::solveTransient(string fileName, int writeInterval){
 	string geomFile = fileName+".geom"; 
 	string tempFile = fileName+".temp";
 	outFile.open(geomFile.c_str());
-	outFile<<1<<'\t'<<Length<<'\t'<<Width<<'\t'<<N<<'\t'<<M<<'\t'<<(int)(std::round(simTime / dt)+1)<<endl;
+	outFile<<1<<'\t'<<writeInterval<<'\t'<<Length<<'\t'<<Width<<'\t'<<N<<'\t'<<M<<'\t'<<floor(simTime / (dt*writeInterval) )<<endl;
 	outFile.close();
 
 	//open tempFile in re write mode to overwrite any existing default file
@@ -964,7 +964,7 @@ void solveSystem(vector<vector<Shell>> &v, string fileName, int writeInterval){
 	string geomFile = fileName+".geom"; 
 	string tempFile = fileName+".temp";
 	outFile.open(geomFile.c_str());
-	outFile<<rows<<'\t'<<Length<<'\t'<<Width<<'\t'<<N<<'\t'<<M<<'\t'<<(int)(std::round(simTime / dt)+1)<<endl;
+	outFile<<rows<<'\t'<<writeInterval<<'\t'<<Length<<'\t'<<Width<<'\t'<<N<<'\t'<<M<<'\t'<<floor(simTime / (dt*writeInterval) )<<endl;
 	outFile.close();
     outFile.open(tempFile.c_str());
 	outFile.close();
