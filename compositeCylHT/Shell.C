@@ -3,12 +3,12 @@
 //Constructor
 Shell::Shell() : axi(true),		   //axisymmetric, i.e., for tube
 				 connected(false), //this shell is not connected to other
-				 M(5),			   //divisions along y(r)
-				 N(3),			   //divisions along x, i.e., along length
+				 M(10),			   //divisions along y(r)
+				 N(8),			   //divisions along x, i.e., along length
 				 ri(0.1),		   //inner radius
 				 Length(0.04),
 				 Width(0.02),
-				 tCond(100), spHeat(100), density(8000),
+				 tCond(16), spHeat(500), density(8000),
 				 initTemp(300),
 				 lbc(constTemp), rbc(constTemp), bbc(constTemp), tbc(constTemp),
 				 TLeft(300), TRight(300), TBottom(300), TTop(300),
@@ -16,7 +16,6 @@ Shell::Shell() : axi(true),		   //axisymmetric, i.e., for tube
 				 //TLeft(300), TRight(300), TBottom(300), TTop(500),
 				 hfL(10), hfR(10), hfB(10), hfT(50),
 				 eps(0.8),
-				 rightISBC{0},bottomISBC{0},
 				 maxiter(1000),
 				 re(1),
 				 simTime(20),
@@ -600,7 +599,7 @@ void Shell::solveSteady(int maxIter){
 			}
 		}
 
-		printTe();
+		//printTe();
 
 		//end of while loop checking t<simTime
 		//--------------------Outer Loop ---------------------------------------------
@@ -1022,7 +1021,7 @@ void solveSystem(vector<vector<Shell>> &v, string fileName, int writeInterval){
 
 
 }
-
+//this will take care (only) the internal bcs 
 void applyInterShellBC(vector<vector<Shell>> &v){
 	for (int i = 0; i < v.size(); i++){
         for (int j = 0; j < v[i].size(); j++){
