@@ -977,10 +977,11 @@ void solveSystem(vector<vector<Shell>> &v, string fileName, int writeInterval){
 			for (int j = 0; j < v[i].size(); j++)
 			{
 				advanceOneTimeStep(v[i][j]);
+				v[i][j].applyBoundaryConditions();
 			}  
 			cout<<endl; 
 		}
-		applyInterShellBC(v);
+		applyInterShellBC(v);//bcs set on the internal faces will be bye-passed here
 		t = t+dt;
 		//outputting file(csv)
 		if ((int)(std::round(t / dt)) % writeInterval == 0)//write only at a user specified intervals
