@@ -101,6 +101,68 @@ void Shell::setThermalConductivity(double Thermal_cond_x,double Thermal_cond_y)
 		tCondy = Thermal_cond_y;
 	}	
 }
+void Shell::setVariableThermalConductivity(int direction, const vector<double> &temp, const vector<double> &tk)
+{
+	//data checking
+	if(temp.size()!=tk.size())
+		{
+			cout<<"Please provide equal number of elements in temperature and thermal cond. vector in setVariableThermalConductivity";
+			exit(1);
+		}
+	if(direction <0 || direction >1)
+	{
+		cout<<"direction in variableThermalConductivity should be either 0 (for along length) or 1 (for along width)";
+		exit(1);
+	}
+	if (*min_element(temp.begin(), temp.end())<0)
+	{
+		cout<<"Negatibve temperature provided in variableThermalConductivity";
+		exit(1);
+	}
+	if (*min_element(tk.begin(), tk.end())<0)
+	{
+		cout<<"Negatibve value of thermal conductivity in variableThermalConductivity";
+		exit(1);
+	}
+
+	//making a pair vector for sorting
+	vector< pair <double,double> > variableTk;
+	for (int i = 0; i < temp.size(); i++)
+	{
+		variableTk.push_back( make_pair(temp[i],tk[i]) );
+	}
+	
+	//sorting according to temp in ascending ordedr
+	sort(variableTk.begin(), variableTk.end());
+
+	/* for (int i=0; i<variableTk.size(); i++)
+    {
+        // "first" and "second" are used to access
+        // 1st and 2nd element of pair respectively
+        cout << variableTk[i].first << " "
+             << variableTk[i].second << endl;
+  
+    } */
+
+	//checking for trend
+	if(temp.size()>2)
+	{
+		for (int i = 1; i < temp.size()-1; i++)
+		{
+			double delTkm = variableTk[i].second - variableTk[i-1].second;
+			double delTkp = variableTk[i+1].second - variableTk[i].second;
+			if (delTkm*delTkp<0)
+			{
+				cout<<"Thermal conductivity shall show unidirectional trend";
+				exit(1);
+			}		
+		}
+	} 
+	//cout<<endl<<interpolate(150, variableTk)<<endl;
+	if (direction==0) tkxTable = variableTk;
+	if (direction==1) tkyTable = variableTk;
+
+}
 void Shell::setHeatCapacity(double Cp)
 {
 	if (Cp<0)
@@ -340,12 +402,21 @@ void Shell::setTep(int j, int i, double val)
 	//if (val<0){cout<<"A negative value cannot be set to temperature: setTep method"<<endl;exit(1);}
 	tep[j][i] = val;
 }
+void Shell::setTkx(int j, int i, double val){
+	if (val<0){cout<<"A negative value cannot be set to therma conductivity: setTkx method"<<endl;exit(1);}
+	tkx[j][i] = val;
+}
+void Shell::setTky(int j, int i, double val){
+	if (val<0){cout<<"A negative value cannot be set to therma conductivity: setTky method"<<endl;exit(1);}
+	tky[j][i] = val;
+}
+
 void Shell::setSp(int j, int i, double val){sp[j][i] = val;}
 void Shell::setSc(int j, int i, double val){sc[j][i] = val;}
 
 
 //getters
-bool Shell::isConnected() { return connected; }
+bool Shell::isConnected() { return connected;}
 bool Shell::getType() { return axi; }
 double Shell::getLength() { return Length; }
 double Shell::getWidth() { return Width; }
@@ -622,7 +693,35 @@ int Shell::getN(){return N;}
 			}
 			return iflag;
 		}
-
+		void Shell::updateThermalConductivity()
+		{
+			double val=0;
+			if (tkxTable.size()>0)
+			{
+				for (int j = 0; j < M+2; j++)
+				{
+					for (int i = 0; i < N+2; i++)
+					{
+						val = interpolate(getTkx(j,i),tkxTable);
+						if(val>0 && val<1e50) setTkx(j,i,val);
+					}
+				}
+				
+			}
+			if (tkyTable.size()>0)
+			{
+				for (int j = 0; j < M+2; j++)
+				{
+					for (int i = 0; i < N+2; i++)
+					{
+						val = interpolate(getTky(j,i),tkyTable);
+						if(val>0 && val<1e50) setTky(j,i,val);
+					}
+				}
+				
+			}
+			
+		}
 //printers
 void Shell::printDetail()
 {
@@ -735,6 +834,17 @@ void Shell::printDetail()
 	cout << "Maximum iteration :" << maxiter << endl;
 	cout << "Relaxation coefficient :" << re << endl;
 	cout << "Time step(s) :" << dt << endl;
+
+	if (tkxTable.size()>0) cout<< "Variation of thermal conductivity along Length:"<<endl;
+	for (int i=0; i<tkxTable.size(); i++)
+    {
+        cout << tkxTable[i].first << " K -> "<< tkxTable[i].second<<" W/m-K"  << endl;
+    }
+	if (tkyTable.size()>0) cout<< "Variation of thermal conductivity along Width:"<<endl;
+	for (int i=0; i<tkyTable.size(); i++)
+    {
+        cout << tkyTable[i].first << " K -> "<< tkyTable[i].second<<" W/m-K" << endl;
+    }
 	cout<<"-----------------------------------------------"<<endl;
 }
 void Shell::printTe()
@@ -1141,6 +1251,24 @@ void tdma(Shell &s, int &j, int &N, vector<double> &ta, vector<double> &tb, vect
 		s.setTe(j,i,dum[i]);
 	}
 }	
+
+
+double interpolate(double x,vector<pair<double, double> > & table ) {
+    // Check if x is out of bound
+	const double INF = 1.e100;
+    if (x > table.back().first) return INF;
+    if (x < table[0].first) return -INF;
+    vector<pair<double, double> >::iterator it, it2;
+    // INFINITY is defined in math.h in the glibc implementation
+    it = lower_bound(table.begin(), table.end(), make_pair(x, -INF));
+    // Corner case
+    if (it == table.begin()) return it->second;
+    it2 = it;
+    --it2;
+    return it2->second + (it->second - it2->second)*(x - it2->first)/(it->first - it2->first);
+}
+
+
 void print2dVector(vector<vector<double>> const &v)
 {
 	for (auto i : v)

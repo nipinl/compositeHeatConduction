@@ -12,6 +12,10 @@ int main()
 	s1.setInitialTemp(300);
 
 	s1.setThermalConductivity(16,0.1);
+	vector <double> temp ={100,400,300,200};
+	vector <double> tk ={10,40,30,20}; 
+	s1.setVariableThermalConductivity(0,temp,tk);
+	s1.printDetail();
 	//s3.setConstantTempBC("Bottom",500);
 	//s3.setConstantTempBC("Left",500);
 	//s4.setConstantTempBC("Bottom",500);

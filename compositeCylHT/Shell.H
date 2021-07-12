@@ -4,6 +4,7 @@
 #include<fstream>
 #include <vector>
 #include <math.h>
+#include<algorithm>
 using namespace std;
 class Shell
 {
@@ -55,6 +56,7 @@ protected:
     //variables for solution
     vector<double> x, y, dx, dy;
     vector<vector<double>> tkx, tky, cp, rho;
+    vector<pair<double, double> > tkxTable, tkyTable;
     vector<vector<double>> te0, tep, te;
     vector<vector<double>> sc, sp;
     vector<double> ta, tb, tc, td;
@@ -74,6 +76,7 @@ public:
     void setTimeStep(double delt = 0.1);
     void setThermalConductivity(double Thermal_cond=16);
     void setThermalConductivity(double Thermal_cond_x=16,double Thermal_cond_y=16);
+    void setVariableThermalConductivity(int direction, const vector<double> &temp, const vector<double> &tk);
     void setHeatCapacity(double Cp = 500);
     void setDensity(double Density = 8000);
     void setInitialTemp(double initialTemp = 300);
@@ -92,6 +95,8 @@ public:
     void setTep(int j, int i, double val);
     void setSp(int j, int i, double val);
     void setSc(int j, int i, double val);
+    void setTkx(int j, int i, double val);
+    void setTky(int j, int i, double val);
 
     //getters
     bool isConnected(); //checks if shell is connected to other.
@@ -133,6 +138,7 @@ public:
 
     void advanceOneTimeStep();
     void applyBoundaryConditions();
+    void updateThermalConductivity();
     void tdma(int);
     int checkConvergence(double);
 
@@ -149,6 +155,7 @@ void solveSteady(vector<vector<Shell>> &v, string fileName= "s");
 void solveSteady(Shell & s, string fileName="s");
 void advanceOneTimeStep(Shell &s);
 void applyInterShellBC(vector<vector<Shell>> &v);
+double interpolate(double x,vector<pair<double, double> > & table );
 void print2dVector(vector<vector<double>> const &v);
 void print1dVector(vector<double> const &v);
 
