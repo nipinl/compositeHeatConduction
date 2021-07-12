@@ -17,7 +17,7 @@ protected:
     double Width;  //thickness of the tube
 
     //Material properties
-    double tCond;
+    double tCondx,tCondy;
     double spHeat;
     double density;
 
@@ -54,7 +54,7 @@ protected:
 
     //variables for solution
     vector<double> x, y, dx, dy;
-    vector<vector<double>> tk, cp, rho;
+    vector<vector<double>> tkx, tky, cp, rho;
     vector<vector<double>> te0, tep, te;
     vector<vector<double>> sc, sp;
     vector<double> ta, tb, tc, td;
@@ -72,7 +72,10 @@ public:
     void setInnerRadius(double innerRadius = 0.1);
     void setSimulationTime(double simtime = 20);
     void setTimeStep(double delt = 0.1);
-    void setMaterialProperties(double Thermal_cond = 16, double Cp = 500, double Density = 8000);
+    void setThermalConductivity(double Thermal_cond=16);
+    void setThermalConductivity(double Thermal_cond_x=16,double Thermal_cond_y=16);
+    void setHeatCapacity(double Cp = 500);
+    void setDensity(double Density = 8000);
     void setInitialTemp(double initialTemp = 300);
     void setConstantTempBC(string boundary = "Left", double Temp = 300);
     void setConstantHeatfluxBC(string boundary = "Bottom", double q = 0);
@@ -100,7 +103,8 @@ public:
     double getInnerRadius();
     double getSimulationTime();
     double getTimeStep();
-    double getTk(int j, int i);
+    double getTkx(int j, int i);
+    double getTky(int j, int i);
     double getTe(int j, int i);
     double getTe0(int j, int i);
     double getRho(int j, int i);

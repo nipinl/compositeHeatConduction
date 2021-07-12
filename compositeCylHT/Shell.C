@@ -8,7 +8,7 @@ Shell::Shell() : axi(true),		   //axisymmetric, i.e., for tube
 				 ri(0.1),		   //inner radius
 				 Length(0.04),
 				 Width(0.02),
-				 tCond(16), spHeat(500), density(8000),
+				 tCondx(16),tCondy(16), spHeat(500), density(8000),
 				 initTemp(300),
 				 lbc(constTemp), rbc(constTemp), bbc(constTemp), tbc(constTemp),
 				 TLeft(300), TRight(300), TBottom(300), TTop(300),
@@ -75,11 +75,56 @@ void Shell::setInnerRadius(double innerRadius){
 	}
 	ri = innerRadius;
 }
-void Shell::setMaterialProperties(double Thermal_cond, double Cp, double Density)
+void Shell::setThermalConductivity(double Thermal_cond)
 {
-	tCond = Thermal_cond;
-	spHeat = Cp;
-	density = Density;
+	if (Thermal_cond<0)
+	{
+		cout<<"Thermal Conductivity cannot be negative";
+		exit(1);
+	}
+	else
+	{
+		tCondx = Thermal_cond;
+		tCondy = Thermal_cond;
+	}	
+}
+void Shell::setThermalConductivity(double Thermal_cond_x,double Thermal_cond_y)
+{
+	if (Thermal_cond_x<0||Thermal_cond_y<0)
+	{
+		cout<<"Thermal Conductivity cannot be negative";
+		exit(1);
+	}
+	else
+	{
+		tCondx = Thermal_cond_x;
+		tCondy = Thermal_cond_y;
+	}	
+}
+void Shell::setHeatCapacity(double Cp)
+{
+	if (Cp<0)
+	{
+		cout<<"Heat Capacity cannot be negative";
+		exit(1);
+	}
+	else
+	{
+		spHeat = Cp;
+	}
+	
+}
+void Shell::setDensity(double Density)
+{
+	if (Density<0)
+	{
+		cout<<"Density cannot be negative";
+		exit(1);
+	}
+	else
+	{
+		density = Density;
+	}
 }
 void Shell::setConstantTempBC(string boundary, double Temp)
 {
@@ -316,7 +361,8 @@ double Shell::getInnerRadius()
 double Shell::getTimeStep() { return dt; }
 double Shell::getSimulationTime() { return simTime; }
 double Shell::getTe(int j, int i){return te[j][i];}
-double Shell::getTk(int j, int i){return tk[j][i];}
+double Shell::getTkx(int j, int i){return tkx[j][i];}
+double Shell::getTky(int j, int i){return tky[j][i];}
 double Shell::getRho(int j, int i){return rho[j][i];}
 double Shell::getCp(int j, int i){return cp[j][i];}
 double Shell::getSp(int j, int i){return sp[j][i];}
@@ -394,16 +440,18 @@ int Shell::getN(){return N;}
 	}
 		void Shell::populateMaterialProperties()
 	{
-		vector<double> tk1d(N + 2, tCond);
+		vector<double> tk1dx(N + 2, tCondx);
+		vector<double> tk1dy(N + 2, tCondy);
 		vector<double> cp1d(N + 2, spHeat);
 		vector<double> rho1d(N + 2, density);
 		for (int i = 0; i < M + 2; i++)
 		{
-			tk.push_back(tk1d);
+			tkx.push_back(tk1dx);
+			tky.push_back(tk1dy);
 			cp.push_back(cp1d);
 			rho.push_back(rho1d);
 		}
-		/* 	Shell::print2dVector(tk);
+		/* 	Shell::print2dVector(tkx);
 		Shell::print2dVector(cp);
 		Shell::print2dVector(rho); */
 	}
@@ -437,18 +485,18 @@ int Shell::getN(){return N;}
 					te[j][0] = TLeft;
 					break;
 				case constHeatFlux:
-					te[j][0] = te[j][1] + 0.5 * dx[1] * qLeft / tk[j][1]; //heat flux into the system is +ve
+					te[j][0] = te[j][1] + 0.5 * dx[1] * qLeft / tkx[j][1]; //heat flux into the system is +ve
 					break;
 				case convection:
-					te[j][0] = (hfL * TLeft + 2 * te[j][1] * tk[j][1] / dx[1]) / (hfL + 2 * tk[j][1] / dx[1]);
+					te[j][0] = (hfL * TLeft + 2 * te[j][1] * tkx[j][1] / dx[1]) / (hfL + 2 * tkx[j][1] / dx[1]);
 					break;
 				case ambientRadiation:
 					qr = eps*5.67e-8*(pow(TLeft,4) -pow(te[j][1],4));
-					te[j][0] = te[j][1] + 0.5 * dx[1] * qr / tk[j][1]; //heat flux into the system is +ve
+					te[j][0] = te[j][1] + 0.5 * dx[1] * qr / tkx[j][1]; //heat flux into the system is +ve
 					break;
 				case convectionRadiation:
 					hfL = hfL + eps*5.67e-8*(pow(TLeft,2) + pow(te[j][1],2)* (te[j][1] + TLeft) );
-					te[j][0] = (hfL * TLeft + 2 * te[j][1] * tk[j][1] / dx[1]) / (hfL + 2 * tk[j][1] / dx[1]);
+					te[j][0] = (hfL * TLeft + 2 * te[j][1] * tkx[j][1] / dx[1]) / (hfL + 2 * tkx[j][1] / dx[1]);
 					break;
 				default:
 					te[j][0] = TLeft;
@@ -465,18 +513,18 @@ int Shell::getN(){return N;}
 					te[j][N + 1] = TRight;
 					break;
 				case constHeatFlux:
-					te[j][N + 1] = te[j][N] + 0.5 * dx[N] * qRight / tk[j][N]; //heat flux into the system is +ve
+					te[j][N + 1] = te[j][N] + 0.5 * dx[N] * qRight / tkx[j][N]; //heat flux into the system is +ve
 					break;
 				case convection:
-					te[j][N + 1] = (hfR * TRight + 2 * te[j][N] * tk[j][N] / dx[N]) / (hfR + 2 * tk[j][N] / dx[N]);
+					te[j][N + 1] = (hfR * TRight + 2 * te[j][N] * tkx[j][N] / dx[N]) / (hfR + 2 * tkx[j][N] / dx[N]);
 					break;
 				case ambientRadiation:
 					qr = eps*5.67e-8*(pow(TRight,4) -pow(te[j][N],4));
-					te[j][N + 1] = te[j][N] + 0.5 * dx[N] * qr / tk[j][N]; //heat flux into the system is +ve
+					te[j][N + 1] = te[j][N] + 0.5 * dx[N] * qr / tkx[j][N]; //heat flux into the system is +ve
 					break;
 				case convectionRadiation:
 					hfR = hfR + eps*5.67e-8*(pow(TRight,2) + pow(te[j][N],2)* (te[j][N] + TRight) );
-					te[j][N + 1] = (hfR * TRight + 2 * te[j][N] * tk[j][N] / dx[N]) / (hfR + 2 * tk[j][N] / dx[N]);
+					te[j][N + 1] = (hfR * TRight + 2 * te[j][N] * tkx[j][N] / dx[N]) / (hfR + 2 * tkx[j][N] / dx[N]);
 					break;
 				default:
 					te[j][0] = TRight;
@@ -493,18 +541,18 @@ int Shell::getN(){return N;}
 					te[0][i] = TBottom;
 					break;
 				case constHeatFlux:
-					te[0][i] = te[1][i] + 0.5 * dy[1] * qBottom / tk[1][i]; //heat flux into the system is +ve
+					te[0][i] = te[1][i] + 0.5 * dy[1] * qBottom / tky[1][i]; //heat flux into the system is +ve
 					break;
 				case convection:
-					te[0][i] = (hfB * TBottom + 2 * te[1][i] * tk[1][i] / dy[1]) / (hfB + 2 * tk[1][i] / dy[1]);
+					te[0][i] = (hfB * TBottom + 2 * te[1][i] * tky[1][i] / dy[1]) / (hfB + 2 * tky[1][i] / dy[1]);
 					break;
 				case ambientRadiation:
 					qr = eps*5.67e-8*(pow(TBottom,4) -pow(te[1][i],4));
-					te[0][i] = te[1][i] + 0.5 * dy[1] * qr / tk[1][i]; //heat flux into the system is +ve
+					te[0][i] = te[1][i] + 0.5 * dy[1] * qr / tky[1][i]; //heat flux into the system is +ve
 					break;
 				case convectionRadiation:
 					hfB = hfB + eps*5.67e-8*(pow(TBottom,2) + pow(te[1][i],2)* (te[1][i] + TBottom) );	
-					te[0][i] = (hfB * TBottom + 2 * te[1][i] * tk[1][i] / dy[1]) / (hfB + 2 * tk[1][i] / dy[1]);
+					te[0][i] = (hfB * TBottom + 2 * te[1][i] * tky[1][i] / dy[1]) / (hfB + 2 * tky[1][i] / dy[1]);
 					break;
 				default:
 					te[0][i] = TBottom;
@@ -521,18 +569,18 @@ int Shell::getN(){return N;}
 					te[M + 1][i] = TTop;
 					break;
 				case constHeatFlux:
-					te[M + 1][i] = te[M][i] + 0.5 * dy[M] * qTop / tk[M][i]; //heat flux into the system is +ve
+					te[M + 1][i] = te[M][i] + 0.5 * dy[M] * qTop / tky[M][i]; //heat flux into the system is +ve
 					break;
 				case convection:
-					te[M + 1][i] = (hfT * TTop + 2 * te[M][i] * tk[M][i] / dy[M]) / (hfT + 2 * tk[M][i] / dy[M]);
+					te[M + 1][i] = (hfT * TTop + 2 * te[M][i] * tky[M][i] / dy[M]) / (hfT + 2 * tky[M][i] / dy[M]);
 					break;
 				case ambientRadiation:
 					qr = eps*5.67e-8*(pow(TTop,4) -pow(te[M][i],4));
-					te[M + 1][i] = te[M][i] + 0.5 * dy[M] * qr / tk[M][i]; //heat flux into the system is +ve
+					te[M + 1][i] = te[M][i] + 0.5 * dy[M] * qr / tky[M][i]; //heat flux into the system is +ve
 					break;
 				case convectionRadiation:
 					hfT = hfT + eps*5.67e-8*(pow(TTop,2) + pow(te[M][i],2)* (te[M][i] + TTop) );		
-					te[M + 1][i] = (hfT * TTop + 2 * te[M][i] * tk[M][i] / dy[M]) / (hfT + 2 * tk[M][i] / dy[M]);
+					te[M + 1][i] = (hfT * TTop + 2 * te[M][i] * tky[M][i] / dy[M]) / (hfT + 2 * tky[M][i] / dy[M]);
 					break;
 				default:
 					te[M + 1][i] = TTop;
@@ -592,7 +640,7 @@ void Shell::printDetail()
 	if (axi)
 		cout << "Shell Thickness(m) :" << Width << endl;
 	cout << "Material properties  :" << endl<<endl;
-	cout << "Thermal Conductivity :" << tCond << endl;
+	cout << "Thermal Conductivity  along Length: " << tCondx<<" and along Width: " << tCondy << endl;
 	cout << "Specific Heat :" << spHeat << endl;
 	cout << "Density :" << density << endl;
 
@@ -843,13 +891,13 @@ void applyInterShellBC(vector<vector<Shell>> &v){
 					double dx1 = v[i][j].getLength()/N1;
 					double dx2 = v[i][j+1].getLength()/N2;
 					double dy  = v[i][j].getWidth()/M1;
-					double k1 = v[i][j].getTk(jj,N1);
-					double k2 = v[i][j+1].getTk(jj,1);
+					double k1 = v[i][j].getTkx(jj,N1);
+					double k2 = v[i][j+1].getTkx(jj,1);
 					double Rc = 0;
 					if(!v[i][j].rightISBC.empty()) Rc = v[i][j].rightISBC[0];
 					double q = (T2 -T1)/(dy * Rc + 0.5 * (dx1/k1 + dx2/k2) );
-					v[i][j].setTe(jj, N1+1 , v[i][j].getTe(jj,N1) + 0.5 * dx1 * q / v[i][j].getTk(jj,N1)); 
-					v[i][j+1].setTe(jj, 0 , v[i][j+1].getTe(jj,1) - 0.5 * dx2 * q / v[i][j+1].getTk(jj,1));		
+					v[i][j].setTe(jj, N1+1 , v[i][j].getTe(jj,N1) + 0.5 * dx1 * q / v[i][j].getTkx(jj,N1)); 
+					v[i][j+1].setTe(jj, 0 , v[i][j+1].getTe(jj,1) - 0.5 * dx2 * q / v[i][j+1].getTkx(jj,1));		
 				}
 			}
 			//horizontal connection
@@ -862,16 +910,16 @@ void applyInterShellBC(vector<vector<Shell>> &v){
 					double dy1 = v[i][j].getWidth()/M1;
 					double dy2 = v[i+1][j].getWidth()/M2;
 					double dx  = v[i][j].getLength()/N1;
-					double k1 = v[i][j].getTk(1,ii);
-					double k2 = v[i+1][j].getTk(M2,ii);
+					double k1 = v[i][j].getTky(1,ii);
+					double k2 = v[i+1][j].getTky(M2,ii);
 					double Rc = 0;
 					double q{0},qconv1{0},qconv2{0};
 					if(v[i][j].bottomISBC.size()<2)//non zero contact resistance
 					{
 						Rc = v[i][j].bottomISBC[0];//other bcs have atleast 2 arguments
 						q = (T2 -T1)/(dx * Rc + 0.5 * (dy1/k1 + dy2/k2) );
-						v[i][j].setTe(0, ii , v[i][j].getTe(1,ii) + 0.5 * dy1 * q / v[i][j].getTk(1,ii)); 
-						v[i+1][j].setTe(M2+1, ii , v[i+1][j].getTe(M2,ii) - 0.5 * dy2 * q / v[i+1][j].getTk(M2,ii));
+						v[i][j].setTe(0, ii , v[i][j].getTe(1,ii) + 0.5 * dy1 * q / v[i][j].getTky(1,ii)); 
+						v[i+1][j].setTe(M2+1, ii , v[i+1][j].getTe(M2,ii) - 0.5 * dy2 * q / v[i+1][j].getTky(M2,ii));
 					}
 					if(v[i][j].bottomISBC.size()>2)//radiation(3) & radiation with convection (5)
 					{
@@ -900,8 +948,8 @@ void applyInterShellBC(vector<vector<Shell>> &v){
 						}
 
 						//setTe for both
-						v[i][j].setTe(0, ii , v[i][j].getTe(1,ii) + 0.5 * dy1 * (q + qconv1) / v[i][j].getTk(1,ii)); 
-						v[i+1][j].setTe(M2+1, ii , v[i+1][j].getTe(M2,ii) - 0.5 * dy2 * (q - qconv2) / v[i+1][j].getTk(M2,ii));
+						v[i][j].setTe(0, ii , v[i][j].getTe(1,ii) + 0.5 * dy1 * (q + qconv1) / v[i][j].getTky(1,ii)); 
+						v[i+1][j].setTe(M2+1, ii , v[i+1][j].getTe(M2,ii) - 0.5 * dy2 * (q - qconv2) / v[i+1][j].getTky(M2,ii));
 					}
 					
 				}			
@@ -967,11 +1015,12 @@ void advanceOneTimeStep(Shell &s)
 					double dxi = s.getDx(i);
 					double dxip1 = s.getDx(i+1);
 					double dxim1 = s.getDx(i-1);
-					double Tkji = s.getTk(j,i);
-					double Tkjip1 = s.getTk(j,i+1);
-					double Tkjim1 = s.getTk(j,i-1);
-					double Tkjp1i = s.getTk(j+1,i);
-					double Tkjm1i = s.getTk(j-1,i);
+					double Tkxji = s.getTkx(j,i);
+					double Tkyji = s.getTky(j,i);
+					double Tkxjip1 = s.getTkx(j,i+1);
+					double Tkxjim1 = s.getTkx(j,i-1);
+					double Tkyjp1i = s.getTkx(j+1,i);
+					double Tkyjm1i = s.getTkx(j-1,i);
 					
 					if (!axi)
 					{
@@ -983,10 +1032,10 @@ void advanceOneTimeStep(Shell &s)
 						sae = dyj * (Yj + Yjp1) / 2.0;
 						saw = sae;
 					}
-					ke = Tkji * Tkjip1 * (dxi + dxip1) / (dxi * Tkjip1 + dxip1 * Tkji);
+					ke = Tkxji * Tkxjip1 * (dxi + dxip1) / (dxi * Tkxjip1 + dxip1 * Tkxji);
 					de = 2.0 * ke * sae / (dxi + dxip1);
 					ae = de;
-					kw = Tkji * Tkjim1 * (dxi + dxim1) / (dxi * Tkjim1 + dxim1 * Tkji);
+					kw = Tkxji * Tkxjim1 * (dxi + dxim1) / (dxi * Tkxjim1 + dxim1 * Tkxji);
 					dw = 2.0 * kw * saw / (dxi + dxim1);
 					aw = dw;
 					if (!axi)
@@ -1000,10 +1049,10 @@ void advanceOneTimeStep(Shell &s)
 						sas = dxi * Yj;
 					}
 
-					kn = Tkji * Tkjp1i * (dyj + dyjp1) / (dyj * Tkjp1i + dyjp1 * Tkji);
+					kn = Tkyji * Tkyjp1i * (dyj + dyjp1) / (dyj * Tkyjp1i + dyjp1 * Tkyji);
 					dn = 2.0 * kn * san / (dyj + dyjp1);
 					an = dn;
-					ks = Tkji * Tkjm1i * (dyj + dyjm1) / (dyj * Tkjm1i + dyjm1 * Tkji);
+					ks = Tkyji * Tkyjm1i * (dyj + dyjm1) / (dyj * Tkyjm1i + dyjm1 * Tkyji);
 					ds = 2.0 * ks * sas / (dyj + dyjm1);
 					as = ds;
 					if (!axi)
