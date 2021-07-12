@@ -703,7 +703,8 @@ void Shell::printTe()
 }
 
 //non member functions
-void solveSystem(vector<vector<Shell>> &v, string fileName, int writeInterval){
+/* main solver */
+void solveTransient(vector<vector<Shell>> &v, string fileName, int writeInterval){
 	//width for horizontal, length for vertical connection
 	//Ri for axi
 	int rows = v.size();
@@ -809,14 +810,21 @@ void solveSystem(vector<vector<Shell>> &v, string fileName, int writeInterval){
 
 
 }
-void solveTransient(Shell & s, string fileName, int writeInterval){
+/* wrapper solvers*/
+	void solveTransient(Shell & s, string fileName, int writeInterval){
 	vector<vector<Shell>> S {{s}};
-	solveSystem(S, fileName,writeInterval);
+	solveTransient(S, fileName,writeInterval);
 }
-void solveSteady(Shell & s, string fileName){
+	
+	
+	void solveSteady(vector<vector<Shell>> &v, string fileName){
+	v[0][0].setTimeStep(1e10);
+	solveTransient(v, fileName);
+}
+	void solveSteady(Shell & s, string fileName){
 	s.setTimeStep(1e10);
 	vector<vector<Shell>> S {{s}};
-	solveSystem(S, fileName);
+	solveTransient(S, fileName);
 }
 
 //this will take care (only) the internal bcs 

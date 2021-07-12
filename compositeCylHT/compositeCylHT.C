@@ -24,9 +24,9 @@ int main()
         {s1,s2},
 		{s3,s4}
     };
-	
+	solveSteady(s);
 	//solveSystem(s);
-	solveTransient(s1);
+	//solveTransient(s1);
 	//s1.solveTransient();
 
 	return 0;

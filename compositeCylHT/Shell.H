@@ -139,8 +139,9 @@ public:
 
 void connectShells(Shell &s1, Shell &s2, double gap = 0.01, double interfaceResistance = 0); //assume outer(top) of first is connected to inner(bottom) of second
 void tdma(Shell &s, int &j, int &N, vector<double> &ta, vector<double> &tb, vector<double> &tc, vector<double> &td);
-void solveSystem(vector<vector<Shell>> &v, string fileName= "s", int writeInterval = 1);
+void solveTransient(vector<vector<Shell>> &v, string fileName= "s", int writeInterval = 1);
 void solveTransient(Shell & s, string fileName="s", int writeInterval=1);
+void solveSteady(vector<vector<Shell>> &v, string fileName= "s");
 void solveSteady(Shell & s, string fileName="s");
 void advanceOneTimeStep(Shell &s);
 void applyInterShellBC(vector<vector<Shell>> &v);
