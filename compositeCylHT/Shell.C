@@ -704,6 +704,7 @@ int Shell::getN(){return N;}
 					{
 						val = interpolate(getTkx(j,i),tkxTable);
 						if(val>0 && val<1e50) setTkx(j,i,val);
+						
 					}
 				}
 				
@@ -716,6 +717,7 @@ int Shell::getN(){return N;}
 					{
 						val = interpolate(getTky(j,i),tkyTable);
 						if(val>0 && val<1e50) setTky(j,i,val);
+						cout<<val<<" YES ";
 					}
 				}
 				

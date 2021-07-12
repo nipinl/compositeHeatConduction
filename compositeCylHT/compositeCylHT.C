@@ -4,7 +4,7 @@ using namespace std;
 int main()
 {                                                                          
 	Shell s1,s2,s3,s4;
-	s1.setSimulationTime(50);
+	s1.setSimulationTime(0.05);
 	s1.setConstantTempBC("Top",1500);
 	s1.setConstantTempBC("Left",1500);
 	s1.setConstantTempBC("Bottom",1500);
@@ -14,8 +14,10 @@ int main()
 	s1.setThermalConductivity(16,0.1);
 	vector <double> temp ={100,400,300,200};
 	vector <double> tk ={10,40,30,20}; 
+	vector <double> tky ={100,400,300,200}; 
 	s1.setVariableThermalConductivity(0,temp,tk);
-	s1.printDetail();
+	s1.setVariableThermalConductivity(1,temp,tky);
+
 	//s3.setConstantTempBC("Bottom",500);
 	//s3.setConstantTempBC("Left",500);
 	//s4.setConstantTempBC("Bottom",500);
@@ -31,7 +33,10 @@ int main()
         {s1,s2},
 		{s3,s4}
     }; */
+
+
 	solveTransient(s1);
+	s1.printDetail();
 	//solveSystem(s);
 	//solveTransient(s1);
 	//s1.solveTransient();
