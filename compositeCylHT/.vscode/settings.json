@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "Shell.C": "cpp",
-        "compositeCylHT.C": "cpp"
+        "compositeCylHT.C": "cpp",
+        "string": "cpp"
     }
 }

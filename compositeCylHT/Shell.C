@@ -348,52 +348,7 @@ double Shell::getRelaxationCoeff(){return re;}
 int Shell::getM(){return M;}
 int Shell::getN(){return N;}
 
-//Transient solver
-void Shell::solveTransient(string fileName, int writeInterval){
-	preprocessShell();
-	double t{0};
-	ofstream outFile;
-	//writing geometry data for plotting using python
-	//no of shells Length Width N M no of time data
-	string geomFile = fileName+".geom"; 
-	string tempFile = fileName+".temp";
-	outFile.open(geomFile.c_str());
-	outFile<<1<<'\t'<<writeInterval<<'\t'<<Length<<'\t'<<Width<<'\t'<<N<<'\t'<<M<<'\t'<<floor(simTime / (dt*writeInterval) )<<endl;
-	outFile.close();
-
-	//open tempFile in re write mode to overwrite any existing default file
-	outFile.open(tempFile.c_str());
-	outFile.close();
-	outFile.open(tempFile.c_str(),std::ios_base::app);
-	while(t<simTime){
-		advanceOneTimeStep();
-		int count{0};
-		if ((int)(std::round(t / dt)) % writeInterval == 0)
-		{
-			for (int j = 1; j < M+1; j++)
-			{
-				for (int i = 1; i < N+1; i++)
-				{
-					outFile<<te[j][i];
-					if (i <N ) outFile<<",";
-					count++;
-				}
-				outFile<<endl;
-			}
-		}
-		t=t+dt;//increment time step
-	}
-
-	outFile.close();
-}
-//Steady solver
-void Shell::solveSteady(int maxIter){
-	maxiter = maxIter;
-	setTimeStep(1e5);
-	solveTransient();
-}
-	
-	//preprocessors 
+//preprocessors 
 	void Shell::preprocessShell(){
 		if (!dx.empty()) {cout<<"This Shell looks to be solved"<<endl;exit(1);}
 		populateNodes();
@@ -470,140 +425,7 @@ void Shell::solveSteady(int maxIter){
 		}
 	}
 
-	//sub-solver methods
-	void Shell::advanceOneTimeStep()
-	{
-		//for convergence checking
-		double maxErr = 1e-10;
-		double error = 1.0e-9;
-
-		//defining variables for equation
-		double ke{0}, kw{0}, ks{0}, kn{0};
-		double de{0}, dw{0}, ds{0}, dn{0};
-		double ae{0}, aw{0}, as{0}, an{0};
-		double a0{0}, ap{0}, b{0}, vol{0};
-		double sae{0}, saw{0}, san{0}, sas{0};
-		//variables required for loop
-		int iter{0}, iflag = 1;
-
-		//--------------------Outer Loop ---------------------------------------------
-
-		//......................Inner Loop ........................................
-		while (iflag == 1)
-		{
-			//update properties if are dependent on temperature. Currently it is not
-
-			//Enforce boundary conditions
-
-			//add source terms if any. Now nothing
-			for (int j = 0; j < M + 2; j++)
-			{
-				for (int i = 0; i < N + 2; i++)
-				{
-					sp[j][i] = 0;
-					sc[j][i] = 0;
-				}
-			}
-			applyBoundaryConditions();
-			// solve -------------------------------------------
-			//START marching in y
-			for (int j = 1; j < M + 1; j++)
-			{
-				//START marching in x
-				for (int i = 1; i < N + 1; i++)
-				{
-					if (!axi)
-					{
-						sae = dy[j];
-						saw = sae;
-					}
-					if (axi)
-					{
-						sae = dy[j] * (y[j] + y[j + 1]) / 2.0;
-						saw = sae;
-					}
-					ke = tk[j][i] * tk[j][i + 1] * (dx[i] + dx[i + 1]) / (dx[i] * tk[j][i + 1] + dx[i + 1] * tk[j][i]);
-					de = 2.0 * ke * sae / (dx[i] + dx[i + 1]);
-					ae = de;
-					kw = tk[j][i] * tk[j][i - 1] * (dx[i] + dx[i - 1]) / (dx[i] * tk[j][i - 1] + dx[i - 1] * tk[j][i]);
-					dw = 2.0 * kw * saw / (dx[i] + dx[i - 1]);
-					aw = dw;
-					if (!axi)
-					{
-						san = dx[i];
-						sas = san;
-					}
-					if (axi)
-					{
-						san = dx[i] * y[j + 1];
-						sas = dx[i] * y[j];
-					}
-
-					kn = tk[j][i] * tk[j + 1][i] * (dy[j] + dy[j + 1]) / (dy[j] * tk[j + 1][i] + dy[j + 1] * tk[j][i]);
-					dn = 2.0 * kn * san / (dy[j] + dy[j + 1]);
-					an = dn;
-					ks = tk[j][i] * tk[j - 1][i] * (dy[j] + dy[j - 1]) / (dy[j] * tk[j - 1][i] + dy[j - 1] * tk[j][i]);
-					ds = 2.0 * ks * sas / (dy[j] + dy[j - 1]);
-					as = ds;
-					if (!axi)
-					{
-						vol = dx[i] * dy[j];
-					}
-					if (axi)
-					{
-						vol = dx[i] * dy[j] * (y[j] + y[j + 1]) / 2.0;
-					}
-					a0 = rho[j][i] * cp[j][i] * vol / dt; // =0 for steady state
-					ap = ae + aw + an + as + a0 - sp[j][i] * vol;
-					b = sc[j][i] * vol + a0 * te0[j][i];
-					ta[i] = ap / re;
-					tb[i] = ae;
-					tc[i] = aw;
-					td[i] = b + ap / re * (1 - re) * te[j][i] + an * te[j + 1][i] + as * te[j - 1][i];
-					if (i == 1)
-						td[i] = td[i] + aw * te[j][0];
-					if (i == N)
-						td[i] = td[i] + ae * te[j][N + 1];
-				} //marching in x ends here
-				//END marching in x
-				//solve in x direction using tdma
-				
-				tdma(j);
-
-			} //marching in y ends here
-			//END marching in y
-			//solve ----------------------------------------------------------------------------------
-			//start convergence checking ---------------------
-			iflag = checkConvergence(error);
-			if (iflag == 1)
-				iter++;
-			if (iflag == 0)
-				cout << "  Solution Converged for one time step. dt = " << dt << " in " << iter << " iterations" << endl;
-			//end convergence checking ***********************
-
-			if (iter > maxiter)
-			{
-				cout << " Iterations need to be inreased. Error in Temp is " << maxErr * 100 << " %" << endl;
-				break;
-			}
-
-		} //end of inner while loop checking iflag
-		//......................Inner Loop ........................................
-
-		for (int i = 0; i < N + 2; i++)
-		{
-			for (int j = 0; j < M + 2; j++)
-			{
-				te0[j][i] = te[j][i];
-				tep[j][i] = te0[j][i];
-			}
-		}
-
-		//printTe();
-
-		//end of while loop checking t<simTime
-		//--------------------Outer Loop ---------------------------------------------
-	}
+//sub-solver methods
 		void Shell::applyBoundaryConditions(){ //calls inside advanceOneTimeStep
 			//tube inlet, which is along r(or y) direction
 			double qr = 0;
@@ -718,39 +540,6 @@ void Shell::solveSteady(int maxIter){
 				}
 			}
 		}
-		void Shell::tdma(int j)
-		{ //calls inside advanceOneTimeStep
-
-			//print1dVector(ta);		
-			double alpha[N + 2]{0}, beta[N + 2]{0}, dum[N + 2]{0};
-			for (int i = 0; i < N + 2; i++)
-			{
-				alpha[i] = 1;
-				beta[i] = 1;
-				dum[i] = 1;
-			}
-			beta[1] = tb[1] / ta[1];
-			alpha[1] = td[1] / ta[1];
-			//forward substitution
-			for (int ii = 2; ii < N + 1; ii++)
-			{
-				beta[ii] = tb[ii] / (ta[ii] - tc[ii] * beta[ii - 1]);
-				alpha[ii] = (td[ii] + tc[ii] * alpha[ii - 1]) / (ta[ii] - tc[ii] * beta[ii - 1]);
-			}
-			//backward substitution
-			dum[N] = alpha[N];
-			for (int jj = 0; jj < N - 1; jj++)
-			{
-				int ii = N - 1 - jj;
-				dum[ii] = beta[ii] * dum[ii + 1] + alpha[ii];
-			}
-			//solved value
-			for (int i = 1; i < N + 1; i++)
-			{
-				te[j][i] = dum[i];
-				//cout<<"dum["<<i<<"] = "<<dum[i]<<endl;
-			}
-		}
 		int Shell::checkConvergence(double error)
 		{ //calls inside advanceOneTimeStep
 			double maxErr{1e-10}, errorTe{0};
@@ -786,7 +575,6 @@ void Shell::solveSteady(int maxIter){
 			return iflag;
 		}
 
-	
 //printers
 void Shell::printDetail()
 {
@@ -914,8 +702,7 @@ void Shell::printTe()
 	}
 }
 
-//non member function methods
-
+//non member functions
 void solveSystem(vector<vector<Shell>> &v, string fileName, int writeInterval){
 	//width for horizontal, length for vertical connection
 	//Ri for axi
@@ -1022,6 +809,16 @@ void solveSystem(vector<vector<Shell>> &v, string fileName, int writeInterval){
 
 
 }
+void solveTransient(Shell & s, string fileName, int writeInterval){
+	vector<vector<Shell>> S {{s}};
+	solveSystem(S, fileName,writeInterval);
+}
+void solveSteady(Shell & s, string fileName){
+	s.setTimeStep(1e10);
+	vector<vector<Shell>> S {{s}};
+	solveSystem(S, fileName);
+}
+
 //this will take care (only) the internal bcs 
 void applyInterShellBC(vector<vector<Shell>> &v){
 	for (int i = 0; i < v.size(); i++){

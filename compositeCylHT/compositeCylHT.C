@@ -18,14 +18,16 @@ int main()
 	s2.setBottomInterShellRadiation(0.8,0.8,0.1);
 	//s2.setBottomInterShellContactResistance(1000);
 	s3.setRightInterShellContactResistance(100);
-	
+
 	vector<vector<Shell>> s
     {
         {s1,s2},
 		{s3,s4}
     };
 	
-	solveSystem(s);
+	//solveSystem(s);
+	solveTransient(s1);
+	//s1.solveTransient();
 
 	return 0;
 }
