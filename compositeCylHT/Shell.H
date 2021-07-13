@@ -95,8 +95,7 @@ public:
     void setTep(int j, int i, double val);
     void setSp(int j, int i, double val);
     void setSc(int j, int i, double val);
-    void setTkx(int j, int i, double val);
-    void setTky(int j, int i, double val);
+    
 
     //getters
     bool isConnected(); //checks if shell is connected to other.

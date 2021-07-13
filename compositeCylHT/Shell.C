@@ -402,14 +402,7 @@ void Shell::setTep(int j, int i, double val)
 	//if (val<0){cout<<"A negative value cannot be set to temperature: setTep method"<<endl;exit(1);}
 	tep[j][i] = val;
 }
-void Shell::setTkx(int j, int i, double val){
-	if (val<0){cout<<"A negative value cannot be set to therma conductivity: setTkx method"<<endl;exit(1);}
-	tkx[j][i] = val;
-}
-void Shell::setTky(int j, int i, double val){
-	if (val<0){cout<<"A negative value cannot be set to therma conductivity: setTky method"<<endl;exit(1);}
-	tky[j][i] = val;
-}
+
 
 void Shell::setSp(int j, int i, double val){sp[j][i] = val;}
 void Shell::setSc(int j, int i, double val){sc[j][i] = val;}
@@ -702,9 +695,8 @@ int Shell::getN(){return N;}
 				{
 					for (int i = 0; i < N+2; i++)
 					{
-						val = interpolate(getTkx(j,i),tkxTable);
-						if(val>0 && val<1e50) setTkx(j,i,val);
-						
+						val = interpolate(te[j][i],tkxTable);
+						if(val>0 && val<1e50) tkx[j][i] = val;
 					}
 				}
 				
@@ -715,13 +707,13 @@ int Shell::getN(){return N;}
 				{
 					for (int i = 0; i < N+2; i++)
 					{
-						val = interpolate(getTky(j,i),tkyTable);
-						if(val>0 && val<1e50) setTky(j,i,val);
-						cout<<val<<" YES ";
+						val = interpolate(te[j][i],tkyTable);
+						if(val>0 && val<1e50) tky[j][i] = val;
 					}
 				}
 				
 			}
+			
 			
 		}
 //printers
@@ -924,6 +916,15 @@ void solveTransient(vector<vector<Shell>> &v, string fileName, int writeInterval
 		{
 			for (int j = 0; j < v[i].size(); j++)
 			{
+				cout<<"before update tkx"<<endl;
+				cout<<v[i][j].getTkx(3,3)<<endl;
+				cout<<"before update tky"<<endl;
+				cout<<v[i][j].getTky(3,3)<<endl;
+				v[i][j].updateThermalConductivity();
+				cout<<"after update tkx"<<endl;
+				cout<<v[i][j].getTkx(3,3)<<endl;
+				cout<<"after update tky"<<endl;
+				cout<<v[i][j].getTky(3,3)<<endl;
 				advanceOneTimeStep(v[i][j]);
 				v[i][j].applyBoundaryConditions();
 			}  
