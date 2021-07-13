@@ -158,7 +158,6 @@ void Shell::setVariableThermalConductivity(int direction, const vector<double> &
 			}		
 		}
 	} 
-	//cout<<endl<<interpolate(150, variableTk)<<endl;
 	if (direction==0) tkxTable = variableTk;
 	if (direction==1) tkyTable = variableTk;
 
@@ -916,19 +915,10 @@ void solveTransient(vector<vector<Shell>> &v, string fileName, int writeInterval
 		{
 			for (int j = 0; j < v[i].size(); j++)
 			{
-				cout<<"before update tkx"<<endl;
-				cout<<v[i][j].getTkx(3,3)<<endl;
-				cout<<"before update tky"<<endl;
-				cout<<v[i][j].getTky(3,3)<<endl;
 				v[i][j].updateThermalConductivity();
-				cout<<"after update tkx"<<endl;
-				cout<<v[i][j].getTkx(3,3)<<endl;
-				cout<<"after update tky"<<endl;
-				cout<<v[i][j].getTky(3,3)<<endl;
 				advanceOneTimeStep(v[i][j]);
 				v[i][j].applyBoundaryConditions();
 			}  
-			cout<<endl; 
 		}
 		applyInterShellBC(v);//bcs set on the internal faces will be bye-passed here
 		t = t+dt;
