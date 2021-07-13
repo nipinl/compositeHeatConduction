@@ -68,7 +68,7 @@ public:
     Shell();
     //setters
     void setConnected(); //change the connection flag to true
-    void setGeometry(double length = 0.04, double width = 0.02, bool cylindrical = true, double innerRadius = 0.1);
+    void cylindrical( bool cylindrical = true);
     void setLength(double length = 0.04);
     void setWidth(double width = 0.04);
     void setInnerRadius(double innerRadius = 0.1);

@@ -32,27 +32,9 @@ void Shell::setTimeStep(double delt)
 {
 	dt = delt;
 }
-void Shell::setGeometry(double length, double width, bool cylindrical, double innerRadius)
+void Shell::cylindrical(bool cylindrical)
 {
-	bool err = false;
-	if (length <= 0)
-	{
-		cout << "Length shall be realistic" << endl;
-		err = true;
-	}
-	if (width <= 0)
-	{
-		cout << "Width shall be realistic" << endl;
-		err = true;
-	}
-	if (err)
-		exit(1);
-	Length = length;
-	Width = width;
 	axi = cylindrical;
-	ri = innerRadius;
-	if (!cylindrical)
-		ri = -1;
 }
 void Shell::setLength(double length){
 	if (length <= 0){
@@ -736,7 +718,7 @@ void Shell::printDetail()
 	cout << "Specific Heat :" << spHeat << endl;
 	cout << "Density :" << density << endl;
 
-	cout << "MSimulation details  :" << endl<<endl;
+	cout << "Simulation details  :" << endl<<endl;
 	cout << "Simulation time(s) :" << simTime << endl;
 	cout << "Number of divisions along y :" << M << endl;
 	cout << "Number of divisions along x :" << N << endl;
